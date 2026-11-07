@@ -64,16 +64,16 @@ h2{font-weight:normal;font-size:26px;text-align:center;margin:18px 0 10px}
 function R(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=R(0,i),t=a[i];a[i]=a[j];a[j]=t;}return a;}
 var THEMES={
-  animal:{name:'동물',icon:'🐶',set:'🐶 🐱 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐔 🐧 🐢 🐙 🦄 🐳 🦒'.split(' ')},
-  fruit:{name:'과일·간식',icon:'🍓',set:'🍎 🍌 🍇 🍓 🍉 🍒 🍑 🍍 🥝 🍋 🥕 🌽 🍩 🍪 🧁 🍦 🍭 🍕 🍔 🍟'.split(' ')},
-  car:{name:'탈것',icon:'🚗',set:'🚗 🚕 🚌 🚒 🚑 🚓 🚜 🚲 🛵 🚂 🚁 ✈️ 🚀 ⛵ 🚢 🚚 🏎️ 🛴 🚤 🛸'.split(' ')},
-  dino:{name:'공룡·바다',icon:'🦖',set:'🦖 🦕 🐊 🐉 🦎 🐍 🦈 🐬 🐋 🐠 🐡 🦀 🦞 🦑 🐚 🌋 🥚 🌴 🦴 ⭐'.split(' ')}
+  animal:{name:'동물',icon:'🐶',set:'🐶 🐱 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐔 🐧 🐢 🐙 🦄 🐳 🦒 🐘 🦓 🐫 🦔 🐿️ 🦉 🐝 🦋 🐞 🐌'.split(' ')},
+  fruit:{name:'과일·간식',icon:'🍓',set:'🍎 🍌 🍇 🍓 🍉 🍒 🍑 🍍 🥝 🍋 🥕 🌽 🍩 🍪 🧁 🍦 🍭 🍕 🍔 🍟 🍐 🍊 🥥 🥦 🍄 🥨 🧀 🍰 🍫 🍙'.split(' ')},
+  car:{name:'탈것',icon:'🚗',set:'🚗 🚕 🚌 🚒 🚑 🚓 🚜 🚲 🛵 🚂 🚁 ✈️ 🚀 ⛵ 🚢 🚚 🏎️ 🛴 🚤 🛸 🚙 🚎 🚐 🚛 🏍️ 🚃 🚄 🚠 🛶 🛺'.split(' ')},
+  dino:{name:'공룡·바다',icon:'🦖',set:'🦖 🦕 🐊 🐉 🦎 🐍 🦈 🐬 🐋 🐠 🐡 🦀 🦞 🦑 🐚 🌋 🥚 🌴 🦴 ⭐ 🐢 🐙 🦐 🐟 🌊 🏝️ 🦩 🦜 🌵 🍄'.split(' ')}
 };
 var LEVELS=[
   {key:'easy',name:'쉬움',em:'🌱',pairs:3,cols:3,peek:2500},
-  {key:'normal',name:'보통',em:'🌼',pairs:6,cols:4,peek:2000},
-  {key:'hard',name:'어려움',em:'🔥',pairs:8,cols:4,peek:0},
-  {key:'master',name:'도전',em:'👑',pairs:12,cols:6,peek:0}
+  {key:'normal',name:'보통',em:'🌼',pairs:8,cols:4,peek:2000},
+  {key:'hard',name:'어려움',em:'🔥',pairs:12,cols:6,peek:0},
+  {key:'master',name:'도전',em:'👑',pairs:24,cols:8,peek:0}
 ];
 var KEY='kidsMemory.v1';
 var D={theme:'animal',level:'easy',players:1,best:{},music:true,sfx:true};
@@ -128,8 +128,8 @@ function rGame(){
 function layout(){
   var b=document.getElementById('board'),bw=b.clientWidth,bh=b.clientHeight,n=G.cards.length,land=bw>bh;
   var cols=G.L.cols,rows=Math.ceil(n/cols);if(!land&&cols>rows){var t=cols;cols=rows;rows=t;if(cols*rows<n)rows++;}
-  var gap=10,cw=Math.floor(Math.min((bw-gap*(cols-1))/cols,((bh-gap*(rows-1))/rows)/1.2)),ch=Math.floor(cw*1.2);
-  var g=document.getElementById('grid');g.style.gridTemplateColumns='repeat('+cols+','+cw+'px)';g.style.gridAutoRows=ch+'px';G.fs=Math.floor(cw*0.62);
+  var gap=n>30?6:10,cw=Math.floor(Math.min((bw-gap*(cols-1))/cols,((bh-gap*(rows-1))/rows)/1.2)),ch=Math.floor(cw*1.2);
+  var g=document.getElementById('grid');g.style.gap=gap+'px';g.style.gridTemplateColumns='repeat('+cols+','+cw+'px)';g.style.gridAutoRows=ch+'px';G.fs=Math.floor(cw*0.62);
 }
 function draw(){
   var g=document.getElementById('grid');if(!g)return;
