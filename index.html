@@ -51,19 +51,21 @@ function hasB(w){var c=w.charCodeAt(w.length-1);if(c<0xAC00||c>0xD7A3)return fal
 function sum(o){var s=0;for(var k in o)s+=o[k]||0;return s;}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function render(){
-  var M=get('kidsMath.v1')||{},Z=get('kidsMaze.v1')||{},H=get('kidsHidden.v2')||{};
+  var M=get('kidsMath.v1')||{},Z=get('kidsMaze.v1')||{},H=get('kidsHidden.v2')||{},Q=get('kidsMemory.v1')||{};
   var name=(M.settings&&M.settings.name)||'';
   var mStars=M.stars||0,mSt=(M.stickers||[]).length,ss=M.session,tod=ss&&ss.date===today()?ss:null,daily=(M.settings&&M.settings.daily)||20;
   var mDone=tod?(tod.done?tod.items.length:tod.idx):0,mTot=tod?tod.items.length:daily;
   var zU=Z.unlocked||{easy:1,normal:1,hard:1},zClear=(zU.easy-1)+(zU.normal-1)+(zU.hard-1),zStars=0;if(Z.best)for(var d in Z.best)for(var s in Z.best[d])zStars+=Z.best[d][s].s||0;
   var hU=H.unlocked||{find:1,diff:1},hClear=(hU.find-1)+(hU.diff-1),hStars=0;if(H.best)for(var m in H.best)hStars+=sum(H.best[m]);
-  var total=mStars+zStars+hStars;
+  var qStars=0,qDone=0;if(Q.best)for(var q in Q.best){qStars+=Q.best[q].s||0;qDone++;}
+  var total=mStars+zStars+hStars+qStars;
   var who=name?esc(name)+(hasB(name)?'이의':'의'):'우리 아이';
   var h='<h1>🎈 '+who+' 놀이터</h1><div class="sub">오늘은 무엇을 하고 놀까요?</div>';
   h+='<div class="total"><span class="chip">⭐ 모은 별 '+total+'개</span><span class="chip">🎁 스티커 '+mSt+'개</span></div><div class="apps">';
   h+='<a class="app" href="math.html" style="background:#ffe8c9"><div class="em">🦉</div><div class="name">수학 놀이터</div><div class="prog">'+(tod&&tod.done?'오늘 문제 다 풀었어요! 🎉':'오늘 문제 '+mDone+' / '+mTot)+'<br>⭐ '+mStars+'</div><div class="bar"><div style="width:'+Math.round(mDone/mTot*100)+'%"></div></div></a>';
   h+='<a class="app" href="maze.html" style="background:#e5e0ff"><div class="em">🧭</div><div class="name">미로 탐험대</div><div class="prog">깬 스테이지 '+zClear+' / 30<br>⭐ '+zStars+'</div><div class="bar"><div style="width:'+Math.round(zClear/30*100)+'%"></div></div></a>';
   h+='<a class="app" href="hidden.html" style="background:#e3f3ea"><div class="em">🔎</div><div class="name">숨은그림 탐정</div><div class="prog">깬 스테이지 '+hClear+' / 20<br>⭐ '+hStars+'</div><div class="bar"><div style="width:'+Math.round(hClear/20*100)+'%"></div></div></a>';
+  h+='<a class="app" href="memory.html" style="background:#ffe0ec"><div class="em">🃏</div><div class="name">짝 맞추기</div><div class="prog">깬 난이도 '+qDone+' / 4<br>⭐ '+qStars+'</div><div class="bar"><div style="width:'+Math.round(qDone/4*100)+'%"></div></div></a>';
   h+='</div><div class="foot"><button onclick="askName()">✏️ 이름 바꾸기</button></div>';
   document.getElementById('app').innerHTML=h;
   if(!name&&!render.asked){render.asked=true;askName();}
