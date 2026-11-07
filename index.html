@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ff9f43">
+<title>우리 아이 놀이터</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff8ec;--ink:#3b2f2a;--sub:#8a7a70}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Jua','Apple SD Gothic Neo','Noto Sans KR',sans-serif;-webkit-user-select:none;user-select:none}
+#app{max-width:1000px;margin:0 auto;padding:20px 16px 40px}
+h1{font-weight:normal;font-size:42px;text-align:center;margin:10px 0 4px}
+.sub{text-align:center;color:var(--sub);font-size:20px}
+.total{display:flex;justify-content:center;gap:12px;margin:18px 0 22px;flex-wrap:wrap}
+.chip{background:#fff;border-radius:999px;padding:10px 20px;font-size:24px;box-shadow:0 3px 0 rgba(0,0,0,.07)}
+.apps{display:grid;grid-template-columns:1fr;gap:16px}
+@media (orientation:landscape) and (min-width:800px){.apps{grid-template-columns:repeat(3,1fr)}}
+a.app{display:block;text-decoration:none;color:inherit;border-radius:28px;padding:22px 18px;box-shadow:0 6px 0 rgba(0,0,0,.08);text-align:center}
+a.app:active{transform:translateY(4px);box-shadow:none}
+.em{font-size:80px;line-height:1.15}
+.name{font-size:32px;margin:4px 0 8px}
+.prog{font-size:19px;color:#5f544d;line-height:1.6}
+.bar{height:12px;background:rgba(255,255,255,.7);border-radius:99px;overflow:hidden;margin:8px auto 0;max-width:240px}
+.bar>div{height:100%;background:#2ecc71}
+.foot{text-align:center;margin-top:24px}
+.foot button{font-family:inherit;font-size:18px;color:var(--sub);background:none;border:0;padding:10px}
+.overlay{position:fixed;inset:0;background:rgba(40,30,20,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+.panel{background:#fff;border-radius:28px;padding:26px;max-width:460px;width:100%;text-align:center}
+.panel input{font-family:inherit;font-size:30px;padding:10px 14px;border-radius:16px;border:3px solid #f1e6d8;width:100%;text-align:center;margin:14px 0;-webkit-user-select:text;user-select:text}
+.panel button{font-family:inherit;font-size:26px;border:0;border-radius:20px;padding:14px;width:100%;background:#2ecc71;color:#fff;box-shadow:0 5px 0 #22a35a}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+function get(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}}
+function put(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function pad2(n){return (n<10?'0':'')+n;}
+function today(){var d=new Date();return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
+function hasB(w){var c=w.charCodeAt(w.length-1);if(c<0xAC00||c>0xD7A3)return false;return (c-0xAC00)%28!==0;}
+function sum(o){var s=0;for(var k in o)s+=o[k]||0;return s;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function render(){
+  var M=get('kidsMath.v1')||{},Z=get('kidsMaze.v1')||{},H=get('kidsHidden.v2')||{};
+  var name=(M.settings&&M.settings.name)||'';
+  var mStars=M.stars||0,mSt=(M.stickers||[]).length,ss=M.session,tod=ss&&ss.date===today()?ss:null,daily=(M.settings&&M.settings.daily)||20;
+  var mDone=tod?(tod.done?tod.items.length:tod.idx):0,mTot=tod?tod.items.length:daily;
+  var zU=Z.unlocked||{easy:1,normal:1,hard:1},zClear=(zU.easy-1)+(zU.normal-1)+(zU.hard-1),zStars=0;if(Z.best)for(var d in Z.best)for(var s in Z.best[d])zStars+=Z.best[d][s].s||0;
+  var hU=H.unlocked||{find:1,diff:1},hClear=(hU.find-1)+(hU.diff-1),hStars=0;if(H.best)for(var m in H.best)hStars+=sum(H.best[m]);
+  var total=mStars+zStars+hStars;
+  var who=name?esc(name)+(hasB(name)?'이의':'의'):'우리 아이';
+  var h='<h1>🎈 '+who+' 놀이터</h1><div class="sub">오늘은 무엇을 하고 놀까요?</div>';
+  h+='<div class="total"><span class="chip">⭐ 모은 별 '+total+'개</span><span class="chip">🎁 스티커 '+mSt+'개</span></div><div class="apps">';
+  h+='<a class="app" href="math.html" style="background:#ffe8c9"><div class="em">🦉</div><div class="name">수학 놀이터</div><div class="prog">'+(tod&&tod.done?'오늘 문제 다 풀었어요! 🎉':'오늘 문제 '+mDone+' / '+mTot)+'<br>⭐ '+mStars+'</div><div class="bar"><div style="width:'+Math.round(mDone/mTot*100)+'%"></div></div></a>';
+  h+='<a class="app" href="maze.html" style="background:#e5e0ff"><div class="em">🧭</div><div class="name">미로 탐험대</div><div class="prog">깬 스테이지 '+zClear+' / 30<br>⭐ '+zStars+'</div><div class="bar"><div style="width:'+Math.round(zClear/30*100)+'%"></div></div></a>';
+  h+='<a class="app" href="hidden.html" style="background:#e3f3ea"><div class="em">🔎</div><div class="name">숨은그림 탐정</div><div class="prog">깬 스테이지 '+hClear+' / 20<br>⭐ '+hStars+'</div><div class="bar"><div style="width:'+Math.round(hClear/20*100)+'%"></div></div></a>';
+  h+='</div><div class="foot"><button onclick="askName()">✏️ 이름 바꾸기</button></div>';
+  document.getElementById('app').innerHTML=h;
+  if(!name&&!render.asked){render.asked=true;askName();}
+}
+function askName(){
+  var M=get('kidsMath.v1')||{},cur=(M.settings&&M.settings.name)||'';
+  var o=document.createElement('div');o.className='overlay';
+  o.innerHTML='<div class="panel"><div style="font-size:60px">👋</div><div style="font-size:26px">아이 이름을 알려 주세요</div><div style="font-size:17px;color:#8a7a70;margin-top:4px">문장 문제와 인사말에 쓰여요</div><input id="nm" maxlength="8" value="'+esc(cur)+'" placeholder="예: 하늘"><button id="ok">좋아요</button></div>';
+  document.body.appendChild(o);var inp=o.querySelector('#nm');setTimeout(function(){try{inp.focus();}catch(e){}},50);
+  o.querySelector('#ok').onclick=function(){var v=inp.value.trim();if(!v){inp.focus();return;}var M2=get('kidsMath.v1')||{};M2.settings=M2.settings||{daily:20,pin:''};M2.settings.name=v;put('kidsMath.v1',M2);o.remove();render();};
+}
+render();
+window.addEventListener('pageshow',render);
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){try{navigator.serviceWorker.register('sw.js').catch(function(){});}catch(e){}}
+</script>
+</body>
+</html>
