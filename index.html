@@ -51,7 +51,7 @@ function hasB(w){var c=w.charCodeAt(w.length-1);if(c<0xAC00||c>0xD7A3)return fal
 function sum(o){var s=0;for(var k in o)s+=o[k]||0;return s;}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function render(){
-  var M=get('kidsMath.v1')||{},Z=get('kidsMaze.v1')||{},H=get('kidsHidden.v2')||{},Q=get('kidsMemory.v1')||{};
+  var M=get('kidsMath.v1')||{},Z=get('kidsMaze.v1')||{},H=get('kidsHidden.v2')||{},Q=get('kidsMemory.v1')||{};var HP=get('kidsHospital.v1')||{};
   var name=(M.settings&&M.settings.name)||'';
   var mStars=M.stars||0,mSt=(M.stickers||[]).length,ss=M.session,tod=ss&&ss.date===today()?ss:null,daily=(M.settings&&M.settings.daily)||20;
   var mDone=tod?(tod.done?tod.items.length:tod.idx):0,mTot=tod?tod.items.length:daily;
@@ -66,6 +66,7 @@ function render(){
   h+='<a class="app" href="maze.html" style="background:#e5e0ff"><div class="em">🧭</div><div class="name">미로 탐험대</div><div class="prog">깬 스테이지 '+zClear+' / 30<br>⭐ '+zStars+'</div><div class="bar"><div style="width:'+Math.round(zClear/30*100)+'%"></div></div></a>';
   h+='<a class="app" href="hidden.html" style="background:#e3f3ea"><div class="em">🔎</div><div class="name">숨은그림 탐정</div><div class="prog">깬 스테이지 '+hClear+' / 20<br>⭐ '+hStars+'</div><div class="bar"><div style="width:'+Math.round(hClear/20*100)+'%"></div></div></a>';
   h+='<a class="app" href="memory.html" style="background:#ffe0ec"><div class="em">🃏</div><div class="name">짝 맞추기</div><div class="prog">깬 난이도 '+qDone+' / 4<br>⭐ '+qStars+'</div><div class="bar"><div style="width:'+Math.round(qDone/4*100)+'%"></div></div></a>';
+  h+='<a class="app" href="hospital.html" style="background:#d9f2ee"><div class="em">🏥</div><div class="name">동물 병원</div><div class="prog">치료한 환자 '+(HP.healed||0)+'명<br>고친 병 '+Object.keys(HP.kinds||{}).length+' / 12</div><div class="bar"><div style="width:'+Math.round(Object.keys(HP.kinds||{}).length/12*100)+'%"></div></div></a>';
   h+='</div><div class="foot"><button onclick="askName()">✏️ 이름 바꾸기</button></div>';
   document.getElementById('app').innerHTML=h;
   if(!name&&!render.asked){render.asked=true;askName();}
