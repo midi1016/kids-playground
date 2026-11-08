@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<script>(function(){function g(){try{return +(JSON.parse(localStorage.getItem('kidsUI.v1')||'{}').scale)||1;}catch(e){return 1;}}var lw=-1;function fit(s){if(s==null)s=g();var m=document.querySelector('meta[name=viewport]');if(!m)return;var a=screen.width,b=screen.height,o=screen.orientation&&screen.orientation.type,w=o?(o.indexOf('landscape')===0?Math.max(a,b):Math.min(a,b)):a;lw=a;m.setAttribute('content',s===1?'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no':'width='+Math.round(w/s)+',initial-scale='+s+',minimum-scale='+s+',maximum-scale='+s+',user-scalable=no');}window.kidsFit=fit;fit();function chk(){if(screen.width!==lw)fit();}window.addEventListener('orientationchange',function(){setTimeout(chk,300);});window.addEventListener('resize',chk);})();</script>
+<script>(function(){var S=window.screen;function g(){try{return +(JSON.parse(localStorage.getItem('kidsUI.v1')||'{}').scale)||1;}catch(e){return 1;}}var lw=-1;function fit(s){if(s==null)s=g();var m=document.querySelector('meta[name=viewport]');if(!m)return;var a=S.width,b=S.height,o=S.orientation&&S.orientation.type,w=o?(o.indexOf('landscape')===0?Math.max(a,b):Math.min(a,b)):a;lw=a;m.setAttribute('content',s===1?'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no':'width='+Math.round(w/s)+',initial-scale='+s+',minimum-scale='+s+',maximum-scale='+s+',user-scalable=no');}window.kidsFit=fit;fit();function chk(){if(S.width!==lw)fit();}window.addEventListener('orientationchange',function(){setTimeout(chk,300);});window.addEventListener('resize',chk);})();</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#ff9f43">
@@ -68,7 +68,8 @@ function render(){
   var qStars=0,qDone=0;if(Q.best)for(var q in Q.best){qStars+=Q.best[q].s||0;qDone++;}
   var ckS=0;if(CK.best)for(var cb in CK.best)ckS+=CK.best[cb]||0;
   var RB=get('kidsRobot.v1')||{},rbS=0,rbDone=0;if(RB.best)for(var rb in RB.best){rbS+=RB.best[rb]||0;rbDone++;}
-  var total=mStars+zStars+hStars+qStars+ckS+rbS;
+  var PZ=get('kidsPuzzle.v1')||{},pzS=0,pzPics={};if(PZ.best)for(var pz in PZ.best){pzS+=PZ.best[pz]||0;pzPics[pz.split('_')[0]]=1;}if(PZ.slide)for(var sl in PZ.slide)pzS+=(PZ.slide[sl]&&PZ.slide[sl].s)||0;var pzDone=Object.keys(pzPics).length;
+  var total=mStars+zStars+hStars+qStars+ckS+rbS+pzS;
   var who=name?esc(name)+(hasB(name)?'이의':'의'):'우리 아이';
   var h='<h1>🎈 '+who+' 놀이터</h1><div class="sub">오늘은 무엇을 하고 놀까요?</div>';
   if(HB.profiles.length){h+='<div class="profs">';HB.profiles.forEach(function(x,i){h+='<button class="prof'+(PF&&x.id===PF.id?' on':'')+'" onclick="pickProf(\''+x.id+'\')"><span class="pe">'+FACE[i%FACE.length]+'</span> '+esc(x.name)+'<small>'+GRN[x.grade]+'</small></button>';});h+='<button class="prof add" onclick="editProf()">✏️ 이름·학년 바꾸기</button></div>';}
@@ -79,6 +80,7 @@ function render(){
   h+='<a class="app" href="memory.html" style="background:#ffe0ec"><div class="em">🃏</div><div class="name">짝 맞추기</div><div class="prog">깬 난이도 '+qDone+' / 4<br>⭐ '+qStars+'</div><div class="bar"><div style="width:'+Math.round(qDone/4*100)+'%"></div></div></a>';
   h+='<a class="app" href="hospital.html" style="background:#d9f2ee"><div class="em">🏥</div><div class="name">동물 병원</div><div class="prog">치료한 환자 '+(HP.healed||0)+'명<br>고친 병 '+Object.keys(HP.kinds||{}).length+' / 12</div><div class="bar"><div style="width:'+Math.round(Object.keys(HP.kinds||{}).length/12*100)+'%"></div></div></a>';
   h+='<a class="app" href="clock.html" style="background:#e3e9ff"><div class="em">🕐</div><div class="name">시계 놀이</div><div class="prog">열린 단계 '+(CK.unlocked||1)+' / 5<br>⭐ '+ckS+'</div><div class="bar"><div style="width:'+Math.round((CK.unlocked||1)/5*100)+'%"></div></div></a>';
+  h+='<a class="app" href="puzzle.html" style="background:#d3f9d8"><div class="em">🧩</div><div class="name">퍼즐 놀이</div><div class="prog">완성한 그림 '+pzDone+' / 12<br>⭐ '+pzS+'</div><div class="bar"><div style="width:'+Math.round(pzDone/12*100)+'%"></div></div></a>';
   h+='<a class="app" href="robot.html" style="background:#dff3ff"><div class="em">🤖</div><div class="name">로봇 코딩</div><div class="prog">깬 판 '+rbDone+' / 30<br>⭐ '+rbS+'</div><div class="bar"><div style="width:'+Math.round(rbDone/30*100)+'%"></div></div></a>';
   h+='</div><div class="foot"><button onclick="sizePanel()">📐 화면 크기 '+Math.round(uiScale()*100)+'%</button></div>';
   document.getElementById('app').innerHTML=h;
