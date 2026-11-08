@@ -80,8 +80,8 @@ function render(){
   h+='<a class="app" href="memory.html" style="background:#ffe0ec"><div class="em">🃏</div><div class="name">짝 맞추기</div><div class="prog">깬 난이도 '+qDone+' / 4<br>⭐ '+qStars+'</div><div class="bar"><div style="width:'+Math.round(qDone/4*100)+'%"></div></div></a>';
   h+='<a class="app" href="hospital.html" style="background:#d9f2ee"><div class="em">🏥</div><div class="name">동물 병원</div><div class="prog">치료한 환자 '+(HP.healed||0)+'명<br>고친 병 '+Object.keys(HP.kinds||{}).length+' / 12</div><div class="bar"><div style="width:'+Math.round(Object.keys(HP.kinds||{}).length/12*100)+'%"></div></div></a>';
   h+='<a class="app" href="clock.html" style="background:#e3e9ff"><div class="em">🕐</div><div class="name">시계 놀이</div><div class="prog">열린 단계 '+(CK.unlocked||1)+' / 5<br>⭐ '+ckS+'</div><div class="bar"><div style="width:'+Math.round((CK.unlocked||1)/5*100)+'%"></div></div></a>';
-  h+='<a class="app" href="puzzle.html" style="background:#d3f9d8"><div class="em">🧩</div><div class="name">퍼즐 놀이</div><div class="prog">완성한 그림 '+pzDone+' / 12<br>⭐ '+pzS+'</div><div class="bar"><div style="width:'+Math.round(pzDone/12*100)+'%"></div></div></a>';
-  h+='<a class="app" href="robot.html" style="background:#dff3ff"><div class="em">🤖</div><div class="name">로봇 코딩</div><div class="prog">깬 판 '+rbDone+' / 30<br>⭐ '+rbS+'</div><div class="bar"><div style="width:'+Math.round(rbDone/30*100)+'%"></div></div></a>';
+  h+='<a class="app" href="puzzle.html" style="background:#d3f9d8"><div class="em">🧩</div><div class="name">퍼즐 놀이</div><div class="prog">완성한 그림 '+pzDone+' / 40<br>⭐ '+pzS+'</div><div class="bar"><div style="width:'+Math.round(pzDone/40*100)+'%"></div></div></a>';
+  h+='<a class="app" href="robot.html" style="background:#dff3ff"><div class="em">🤖</div><div class="name">로봇 코딩</div><div class="prog">깬 판 '+rbDone+' / 38<br>⭐ '+rbS+'</div><div class="bar"><div style="width:'+Math.round(rbDone/38*100)+'%"></div></div></a>';
   h+='</div><div class="foot"><button onclick="sizePanel()">📐 화면 크기 '+Math.round(uiScale()*100)+'%</button></div>';
   document.getElementById('app').innerHTML=h;
   if(!PF&&!render.asked){render.asked=true;editProf(true);}
