@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<script>(function(){function g(){try{return +(JSON.parse(localStorage.getItem('kidsUI.v1')||'{}').scale)||1;}catch(e){return 1;}}var lw=-1;function fit(s){if(s==null)s=g();var m=document.querySelector('meta[name=viewport]');if(!m)return;var a=screen.width,b=screen.height,o=screen.orientation&&screen.orientation.type,w=o?(o.indexOf('landscape')===0?Math.max(a,b):Math.min(a,b)):a;lw=a;m.setAttribute('content',s===1?'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no':'width='+Math.round(w/s)+',initial-scale='+s+',minimum-scale='+s+',maximum-scale='+s+',user-scalable=no');}window.kidsFit=fit;fit();function chk(){if(screen.width!==lw)fit();}window.addEventListener('orientationchange',function(){setTimeout(chk,300);});window.addEventListener('resize',chk);})();</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#ff9f43">
@@ -66,7 +67,8 @@ function render(){
   var hU=H.unlocked||{find:1,diff:1},hClear=(hU.find-1)+(hU.diff-1),hStars=0;if(H.best)for(var m in H.best)hStars+=sum(H.best[m]);
   var qStars=0,qDone=0;if(Q.best)for(var q in Q.best){qStars+=Q.best[q].s||0;qDone++;}
   var ckS=0;if(CK.best)for(var cb in CK.best)ckS+=CK.best[cb]||0;
-  var total=mStars+zStars+hStars+qStars+ckS;
+  var RB=get('kidsRobot.v1')||{},rbS=0,rbDone=0;if(RB.best)for(var rb in RB.best){rbS+=RB.best[rb]||0;rbDone++;}
+  var total=mStars+zStars+hStars+qStars+ckS+rbS;
   var who=name?esc(name)+(hasB(name)?'이의':'의'):'우리 아이';
   var h='<h1>🎈 '+who+' 놀이터</h1><div class="sub">오늘은 무엇을 하고 놀까요?</div>';
   if(HB.profiles.length){h+='<div class="profs">';HB.profiles.forEach(function(x,i){h+='<button class="prof'+(PF&&x.id===PF.id?' on':'')+'" onclick="pickProf(\''+x.id+'\')"><span class="pe">'+FACE[i%FACE.length]+'</span> '+esc(x.name)+'<small>'+GRN[x.grade]+'</small></button>';});h+='<button class="prof add" onclick="editProf()">✏️ 이름·학년 바꾸기</button></div>';}
@@ -77,9 +79,24 @@ function render(){
   h+='<a class="app" href="memory.html" style="background:#ffe0ec"><div class="em">🃏</div><div class="name">짝 맞추기</div><div class="prog">깬 난이도 '+qDone+' / 4<br>⭐ '+qStars+'</div><div class="bar"><div style="width:'+Math.round(qDone/4*100)+'%"></div></div></a>';
   h+='<a class="app" href="hospital.html" style="background:#d9f2ee"><div class="em">🏥</div><div class="name">동물 병원</div><div class="prog">치료한 환자 '+(HP.healed||0)+'명<br>고친 병 '+Object.keys(HP.kinds||{}).length+' / 12</div><div class="bar"><div style="width:'+Math.round(Object.keys(HP.kinds||{}).length/12*100)+'%"></div></div></a>';
   h+='<a class="app" href="clock.html" style="background:#e3e9ff"><div class="em">🕐</div><div class="name">시계 놀이</div><div class="prog">열린 단계 '+(CK.unlocked||1)+' / 5<br>⭐ '+ckS+'</div><div class="bar"><div style="width:'+Math.round((CK.unlocked||1)/5*100)+'%"></div></div></a>';
-  h+='</div>';
+  h+='<a class="app" href="robot.html" style="background:#dff3ff"><div class="em">🤖</div><div class="name">로봇 코딩</div><div class="prog">깬 판 '+rbDone+' / 30<br>⭐ '+rbS+'</div><div class="bar"><div style="width:'+Math.round(rbDone/30*100)+'%"></div></div></a>';
+  h+='</div><div class="foot"><button onclick="sizePanel()">📐 화면 크기 '+Math.round(uiScale()*100)+'%</button></div>';
   document.getElementById('app').innerHTML=h;
   if(!PF&&!render.asked){render.asked=true;editProf(true);}
+}
+function uiScale(){var U=get('kidsUI.v1')||{};return +U.scale||1;}
+function sizePanel(){
+  var STEPS=[0.6,0.7,0.8,0.9,1,1.1,1.2,1.3],o=document.createElement('div');o.className='overlay';
+  function idx(){var s=uiScale(),b=0;STEPS.forEach(function(v,i){if(Math.abs(v-s)<Math.abs(STEPS[b]-s))b=i;});return b;}
+  function setS(v){var U=get('kidsUI.v1')||{};U.scale=v;put('kidsUI.v1',U);if(window.kidsFit)window.kidsFit(v);draw();}
+  function draw(){var i=idx();o.innerHTML='<div class="panel"><div style="font-size:56px">📐</div><div style="font-size:26px">화면 크기</div><div style="font-size:17px;color:#8a7a70;margin:6px 0 12px">글씨·버튼이 화면에 다 들어오게 맞춰요.<br>모든 놀이에 똑같이 적용돼요.</div>'+
+    '<div style="display:flex;gap:10px;align-items:center"><button id="dn" style="flex:1;width:auto;background:#5c7cfa;box-shadow:0 5px 0 #3b5bdb'+(i===0?';opacity:.4':'')+'">－ 작게</button><div style="font-size:34px;min-width:100px">'+Math.round(STEPS[i]*100)+'%</div><button id="up" style="flex:1;width:auto;background:#ff9f43;box-shadow:0 5px 0 #e67e22'+(i===STEPS.length-1?';opacity:.4':'')+'">＋ 크게</button></div>'+
+    '<button id="ok" style="margin-top:16px">좋아요</button><button id="rs" class="cx">보통(100%)으로</button></div>';
+    o.querySelector('#dn').onclick=function(){if(i>0)setS(STEPS[i-1]);};
+    o.querySelector('#up').onclick=function(){if(i<STEPS.length-1)setS(STEPS[i+1]);};
+    o.querySelector('#rs').onclick=function(){setS(1);};
+    o.querySelector('#ok').onclick=function(){o.remove();render();};}
+  draw();document.body.appendChild(o);
 }
 function pickProf(id){var H=hub();H.cur=id;put('kidsHub.v1',H);render();}
 function editProf(isNew){

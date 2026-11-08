@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<script>(function(){function g(){try{return +(JSON.parse(localStorage.getItem('kidsUI.v1')||'{}').scale)||1;}catch(e){return 1;}}var lw=-1;function fit(s){if(s==null)s=g();var m=document.querySelector('meta[name=viewport]');if(!m)return;var a=screen.width,b=screen.height,o=screen.orientation&&screen.orientation.type,w=o?(o.indexOf('landscape')===0?Math.max(a,b):Math.min(a,b)):a;lw=a;m.setAttribute('content',s===1?'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no':'width='+Math.round(w/s)+',initial-scale='+s+',minimum-scale='+s+',maximum-scale='+s+',user-scalable=no');}window.kidsFit=fit;fit();function chk(){if(screen.width!==lw)fit();}window.addEventListener('orientationchange',function(){setTimeout(chk,300);});window.addEventListener('resize',chk);})();</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#2b2b2b">
 <title>숨은그림 탐정</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
