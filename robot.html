@@ -192,7 +192,8 @@ try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);for(var k in
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
 var NAME='',GRADE='K';try{var HB=JSON.parse(localStorage.getItem('kidsHub.v1')||'null');if(HB&&HB.profiles){var PF=HB.profiles.filter(function(x){return x.id===HB.cur;})[0]||HB.profiles[0];if(PF){NAME=PF.name;GRADE=PF.grade||'K';}}}catch(e){}
 var STAGE_START=[0,8,15,23],START=STAGE_START[{K:0,'1':1,'2':2,'3':2}[GRADE]||0];
-function unlocked(i){return i<=START||D.best[i]!=null||D.best[i-1]!=null;}
+var FREE_FROM=firstOf(4),FREE_TO=FREE_FROM+3; // 화살표 정리판(31~34판)은 처음부터 열림
+function unlocked(i){return i<=START||(i>=FREE_FROM&&i<=FREE_TO)||D.best[i]!=null||D.best[i-1]!=null;}
 function defaultLv(){for(var i=START;i<LV.length;i++)if(D.best[i]==null&&unlocked(i))return i;for(i=0;i<LV.length;i++)if(D.best[i]==null&&unlocked(i))return i;return START;}
 
 // ---------- 소리·읽어주기 ----------
