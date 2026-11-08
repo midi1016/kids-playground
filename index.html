@@ -21,6 +21,8 @@ html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-fa
 h1{font-weight:normal;font-size:42px;text-align:center;margin:10px 0 4px}
 .sub{text-align:center;color:var(--sub);font-size:20px}
 .total{display:flex;justify-content:center;gap:12px;margin:18px 0 22px;flex-wrap:wrap}
+.profs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px 0 0}.prof{font-family:inherit;font-size:24px;background:#fff;border:3px solid transparent;border-radius:999px;padding:8px 18px;box-shadow:0 3px 0 rgba(0,0,0,.07);color:#3b2f2a}.prof .pe{font-size:26px}.prof small{font-size:15px;color:#8a7a70;margin-left:6px}.prof.on{border-color:#ff9f43;background:#fff3e2}.prof.add{font-size:18px;color:#8a7a70}
+.grs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}.gr{font-family:inherit;font-size:20px;padding:12px 4px;border-radius:14px;border:3px solid #f1e6d8;background:#fff;color:#3b2f2a}.gr.on{border-color:#2ecc71;background:#eafaf1}.cx{background:#fff!important;color:#8a7a70!important;box-shadow:none!important;font-size:20px!important;margin-top:6px}
 .chip{background:#fff;border-radius:999px;padding:10px 20px;font-size:24px;box-shadow:0 3px 0 rgba(0,0,0,.07)}
 .apps{display:grid;grid-template-columns:1fr;gap:16px}
 @media (orientation:landscape) and (min-width:800px){.apps{grid-template-columns:repeat(3,1fr)}}
@@ -50,33 +52,48 @@ function today(){var d=new Date();return d.getFullYear()+'-'+pad2(d.getMonth()+1
 function hasB(w){var c=w.charCodeAt(w.length-1);if(c<0xAC00||c>0xD7A3)return false;return (c-0xAC00)%28!==0;}
 function sum(o){var s=0;for(var k in o)s+=o[k]||0;return s;}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var GRN={K:'유치원','1':'1학년','2':'2학년','3':'3학년'},FACE=['🐣','🐥','🐻','🐰','🦊'];
+function hub(){var H=get('kidsHub.v1');if(!H||!H.profiles||!H.profiles.length){var M0=get('kidsMath.v1')||{},nm=(M0.settings&&M0.settings.name)||'';H={profiles:nm?[{id:'p1',name:nm,grade:'2'}]:[],cur:'p1'};if(nm)put('kidsHub.v1',H);}return H;}
+function curProf(H){return H.profiles.filter(function(x){return x.id===H.cur;})[0]||H.profiles[0];}
+function mathKey(id){return id==='p1'?'kidsMath.v1':'kidsMath.v1.'+id;}
 function render(){
-  var M=get('kidsMath.v1')||{},Z=get('kidsMaze.v1')||{},H=get('kidsHidden.v2')||{},Q=get('kidsMemory.v1')||{};var HP=get('kidsHospital.v1')||{};
-  var name=(M.settings&&M.settings.name)||'';
-  var mStars=M.stars||0,mSt=(M.stickers||[]).length,ss=M.session,tod=ss&&ss.date===today()?ss:null,daily=(M.settings&&M.settings.daily)||20;
+  var HB=hub(),PF=curProf(HB);
+  var M=(PF?get(mathKey(PF.id)):null)||{},Z=get('kidsMaze.v1')||{},H=get('kidsHidden.v2')||{},Q=get('kidsMemory.v1')||{};var HP=get('kidsHospital.v1')||{};var CK=get('kidsClock.v1')||{};
+  var name=PF?PF.name:'';
+  var mStars=M.stars||0,mSt=(M.stickers||[]).length,ss=M.session,tod=ss&&ss.date===today()?ss:null,daily=(M.settings&&M.settings.daily)||(PF&&({K:10,'1':15})[PF.grade])||20;
   var mDone=tod?(tod.done?tod.items.length:tod.idx):0,mTot=tod?tod.items.length:daily;
   var zU=Z.unlocked||{easy:1,normal:1,hard:1},zClear=(zU.easy-1)+(zU.normal-1)+(zU.hard-1),zStars=0;if(Z.best)for(var d in Z.best)for(var s in Z.best[d])zStars+=Z.best[d][s].s||0;
   var hU=H.unlocked||{find:1,diff:1},hClear=(hU.find-1)+(hU.diff-1),hStars=0;if(H.best)for(var m in H.best)hStars+=sum(H.best[m]);
   var qStars=0,qDone=0;if(Q.best)for(var q in Q.best){qStars+=Q.best[q].s||0;qDone++;}
-  var total=mStars+zStars+hStars+qStars;
+  var ckS=0;if(CK.best)for(var cb in CK.best)ckS+=CK.best[cb]||0;
+  var total=mStars+zStars+hStars+qStars+ckS;
   var who=name?esc(name)+(hasB(name)?'이의':'의'):'우리 아이';
   var h='<h1>🎈 '+who+' 놀이터</h1><div class="sub">오늘은 무엇을 하고 놀까요?</div>';
+  if(HB.profiles.length){h+='<div class="profs">';HB.profiles.forEach(function(x,i){h+='<button class="prof'+(PF&&x.id===PF.id?' on':'')+'" onclick="pickProf(\''+x.id+'\')"><span class="pe">'+FACE[i%FACE.length]+'</span> '+esc(x.name)+'<small>'+GRN[x.grade]+'</small></button>';});h+='<button class="prof add" onclick="editProf(true)">＋ 아이 추가</button></div>';}
   h+='<div class="total"><span class="chip">⭐ 모은 별 '+total+'개</span><span class="chip">🎁 스티커 '+mSt+'개</span></div><div class="apps">';
   h+='<a class="app" href="math.html" style="background:#ffe8c9"><div class="em">🦉</div><div class="name">수학 놀이터</div><div class="prog">'+(tod&&tod.done?'오늘 문제 다 풀었어요! 🎉':'오늘 문제 '+mDone+' / '+mTot)+'<br>⭐ '+mStars+'</div><div class="bar"><div style="width:'+Math.round(mDone/mTot*100)+'%"></div></div></a>';
   h+='<a class="app" href="maze.html" style="background:#e5e0ff"><div class="em">🧭</div><div class="name">미로 탐험대</div><div class="prog">깬 스테이지 '+zClear+' / 30<br>⭐ '+zStars+'</div><div class="bar"><div style="width:'+Math.round(zClear/30*100)+'%"></div></div></a>';
   h+='<a class="app" href="hidden.html" style="background:#e3f3ea"><div class="em">🔎</div><div class="name">숨은그림 탐정</div><div class="prog">깬 스테이지 '+hClear+' / 20<br>⭐ '+hStars+'</div><div class="bar"><div style="width:'+Math.round(hClear/20*100)+'%"></div></div></a>';
   h+='<a class="app" href="memory.html" style="background:#ffe0ec"><div class="em">🃏</div><div class="name">짝 맞추기</div><div class="prog">깬 난이도 '+qDone+' / 4<br>⭐ '+qStars+'</div><div class="bar"><div style="width:'+Math.round(qDone/4*100)+'%"></div></div></a>';
   h+='<a class="app" href="hospital.html" style="background:#d9f2ee"><div class="em">🏥</div><div class="name">동물 병원</div><div class="prog">치료한 환자 '+(HP.healed||0)+'명<br>고친 병 '+Object.keys(HP.kinds||{}).length+' / 12</div><div class="bar"><div style="width:'+Math.round(Object.keys(HP.kinds||{}).length/12*100)+'%"></div></div></a>';
-  h+='</div><div class="foot"><button onclick="askName()">✏️ 이름 바꾸기</button></div>';
+  h+='<a class="app" href="clock.html" style="background:#e3e9ff"><div class="em">🕐</div><div class="name">시계 놀이</div><div class="prog">열린 단계 '+(CK.unlocked||1)+' / 5<br>⭐ '+ckS+'</div><div class="bar"><div style="width:'+Math.round((CK.unlocked||1)/5*100)+'%"></div></div></a>';
+  h+='</div><div class="foot"><button onclick="editProf()">✏️ 이름·학년 바꾸기</button></div>';
   document.getElementById('app').innerHTML=h;
-  if(!name&&!render.asked){render.asked=true;askName();}
+  if(!PF&&!render.asked){render.asked=true;editProf(true);}
 }
-function askName(){
-  var M=get('kidsMath.v1')||{},cur=(M.settings&&M.settings.name)||'';
+function pickProf(id){var H=hub();H.cur=id;put('kidsHub.v1',H);render();}
+function editProf(isNew){
+  var H=hub(),P=isNew?null:curProf(H),g=P?P.grade:(H.profiles.length?'K':'2');
   var o=document.createElement('div');o.className='overlay';
-  o.innerHTML='<div class="panel"><div style="font-size:60px">👋</div><div style="font-size:26px">아이 이름을 알려 주세요</div><div style="font-size:17px;color:#8a7a70;margin-top:4px">문장 문제와 인사말에 쓰여요</div><input id="nm" maxlength="8" value="'+esc(cur)+'" placeholder="예: 하늘"><button id="ok">좋아요</button></div>';
-  document.body.appendChild(o);var inp=o.querySelector('#nm');setTimeout(function(){try{inp.focus();}catch(e){}},50);
-  o.querySelector('#ok').onclick=function(){var v=inp.value.trim();if(!v){inp.focus();return;}var M2=get('kidsMath.v1')||{};M2.settings=M2.settings||{daily:20,pin:''};M2.settings.name=v;put('kidsMath.v1',M2);o.remove();render();};
+  function draw(){o.innerHTML='<div class="panel"><div style="font-size:56px">'+(isNew?'👋':'✏️')+'</div><div style="font-size:26px">'+(isNew?'놀이터에 올 아이를 알려 주세요':'이름·학년 바꾸기')+'</div><input id="nm" maxlength="8" value="'+esc(P?P.name:(o.nm||''))+'" placeholder="이름 (예: 하늘)"><div style="font-size:18px;color:#8a7a70;margin:4px 0 8px">수학 문제 학년</div><div class="grs">'+
+    ['K','1','2','3'].map(function(k){return '<button class="gr'+(g===k?' on':'')+'" data-g="'+k+'">'+GRN[k]+'</button>';}).join('')+'</div><button id="ok">좋아요</button>'+(H.profiles.length||!isNew?'<button id="cx" class="cx">취소</button>':'')+'</div>';
+    Array.prototype.forEach.call(o.querySelectorAll('.gr'),function(b){b.onclick=function(){o.nm=o.querySelector('#nm').value;if(P)P.name=o.nm;g=b.getAttribute('data-g');draw();};});
+    var cx=o.querySelector('#cx');if(cx)cx.onclick=function(){o.remove();};
+    o.querySelector('#ok').onclick=function(){var v=o.querySelector('#nm').value.trim();if(!v){o.querySelector('#nm').focus();return;}
+      if(isNew){var id=H.profiles.length?'p'+Date.now().toString(36):'p1';H.profiles.push({id:id,name:v,grade:g});H.cur=id;}
+      else{var gChanged=P.grade!==g;P.name=v;P.grade=g;var M2=get(mathKey(P.id));if(M2){M2.settings=M2.settings||{};M2.settings.name=v;if(gChanged){delete M2.levels;M2.session=null;M2.review=[];}put(mathKey(P.id),M2);}}
+      put('kidsHub.v1',H);o.remove();render();};}
+  draw();document.body.appendChild(o);
 }
 render();
 window.addEventListener('pageshow',render);
