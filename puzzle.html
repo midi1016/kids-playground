@@ -28,6 +28,8 @@ h3{font-weight:normal;font-size:24px;margin:14px 0 8px}
 @media (min-width:900px){.ths{grid-template-columns:1fr 1fr}}
 .pics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}
 @media (max-width:600px){.pics{grid-template-columns:repeat(3,1fr)}}
+.tpics{grid-template-columns:repeat(7,1fr)}
+@media (orientation:portrait){.tpics{grid-template-columns:repeat(4,1fr)}}
 .thtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}
 .tht{font-size:21px;padding:10px 4px;border-radius:16px;background:#fff;box-shadow:0 4px 0 var(--line);border:4px solid transparent}
 .tht.on{border-color:var(--main);background:#f3fffb}
@@ -378,11 +380,11 @@ function say(t){if(!D.voice||!window.speechSynthesis)return;try{speechSynthesis.
 
 // ---------- 처음 화면 ----------
 var app=document.getElementById('app'),scr='home',G=null;
-function go(s){scr=s;var hb=document.getElementById('hubbtn');if(hb)hb.style.display=s==='home'?'':'none';app.className=s;({home:rHome,jig:rJig,slide:rSlide})[s]();}
+function go(s){scr=s;var hb=document.getElementById('hubbtn');if(hb)hb.style.display=s==='home'?'':'none';app.className=s;({home:rHome,jig:rJig,slide:rSlide,tan:rTan})[s]();}
 function stars(n){var s='';for(var i=0;i<3;i++)s+=i<n?'★':'☆';return s;}
 function picBest(i){var b=0;SIZES.forEach(function(n){b=Math.max(b,D.best[i+'_'+n]||0);});return b;}
 function rHome(){
-  var h='<h1>🧩 퍼즐 놀이</h1><div class="tabs"><button class="tab'+(D.tab==='jig'?' on':'')+'" onclick="App.tab(\'jig\')">🧩 조각 퍼즐</button><button class="tab'+(D.tab==='slide'?' on':'')+'" onclick="App.tab(\'slide\')">🔢 밀기 퍼즐</button></div>';
+  var h='<h1>🧩 퍼즐 놀이</h1><div class="tabs"><button class="tab'+(D.tab==='jig'?' on':'')+'" onclick="App.tab(\'jig\')">🧩 조각 퍼즐</button><button class="tab'+(D.tab==='slide'?' on':'')+'" onclick="App.tab(\'slide\')">🔢 밀기 퍼즐</button><button class="tab'+(D.tab==='tan'?' on':'')+'" onclick="App.tab(\'tan\')">🔷 칠교놀이</button></div>';
   if(D.tab==='jig'){
     h+='<h3>조각 수</h3><div class="szs">';
     SIZES.forEach(function(n){var b=D.best[D.pic+'_'+n];h+='<button class="sz'+(D.size===n?' sel':'')+'" onclick="App.size('+n+')"><b>'+n+'</b>조각<small>'+(b?stars(b):'')+'</small></button>';});
@@ -390,6 +392,10 @@ function rHome(){
     h+='</div><div class="pics">';
     PICS.forEach(function(Pc,i){if(Pc.t!==D.theme)return;var b=picBest(i);h+='<button class="pc'+(D.pic===i?' sel':'')+'" onclick="App.pic('+i+')"><img src="'+picURL(i)+'" alt=""><span>'+Pc.n+'</span><small>'+(b?stars(b):'')+'</small></button>';});
     h+='</div><div class="tg"><button class="'+(D.ghost?'on':'')+'" onclick="App.set(\'ghost\')">🖼️ 밑그림 '+(D.ghost?'켬':'끔')+'</button>';
+  }else if(D.tab==='tan'){
+    var tf=D.tfig||0;h+='<h3>어떤 모양을 만들까요?</h3><div class="pics tpics">';
+    TNAMES.forEach(function(n,i){var b=(D.tan||{})[n];h+='<button class="pc'+(tf===i?' sel':'')+'" onclick="App.tfig('+i+')"><div style="width:100%;padding:6px">'+figThumb(n)+'</div><span>'+n+'</span><small>'+(b?stars(b):'')+'</small></button>';});
+    h+='</div><div class="box" style="margin-top:14px;font-size:19px">조각 7개로 그림자 모양을 채워요. 조각을 <b>톡</b> 누르면 돌아가고, 끌어서 옮겨요.</div><div class="tg"><button class="'+(D.tanEasy!==false?'on':'')+'" onclick="App.teasy()">✏️ 도움선 '+(D.tanEasy!==false?'켬':'끔')+'</button>';
   }else{
     h+='<h3>무엇을 맞출까요?</h3><div class="szs" style="grid-template-columns:1fr 1fr"><button class="sz'+(D.smode==='pic'?' sel':'')+'" onclick="App.smode(\'pic\')"><b class="em">🖼️</b>그림 맞추기</button><button class="sz'+(D.smode==='num'?' sel':'')+'" onclick="App.smode(\'num\')"><b>123</b>숫자 차례대로</button></div>';
     h+='<h3>크기</h3><div class="szs" style="grid-template-columns:repeat(3,1fr)">';
@@ -397,7 +403,7 @@ function rHome(){
     h+='</div><div class="box" style="margin-top:14px;font-size:19px">빈칸 옆 조각을 누르면 빈칸으로 쏙! 적게 움직일수록 별이 많아요.</div><div class="tg">';
   }
   h+='<button class="'+(D.voice?'on':'')+'" onclick="App.set(\'voice\')">🗣️ 읽어주기 '+(D.voice?'켬':'끔')+'</button><button class="'+(D.sfx?'on':'')+'" onclick="App.set(\'sfx\')">🔊 효과음 '+(D.sfx?'켬':'끔')+'</button></div>';
-  h+='<button class="btn stick" onclick="App.start()">'+(D.tab==='jig'?PICS[D.pic].n+' '+D.size+'조각 시작! ▶':'밀기 퍼즐 시작! ▶')+'</button>';
+  h+='<button class="btn stick" onclick="App.start()">'+(D.tab==='jig'?PICS[D.pic].n+' '+D.size+'조각 시작! ▶':D.tab==='tan'?TNAMES[D.tfig||0]+' 만들기 시작! ▶':'밀기 퍼즐 시작! ▶')+'</button>';
   var st=app.scrollTop;app.innerHTML=h;app.scrollTop=st;
 }
 
@@ -543,6 +549,80 @@ function winS(){
     '<button class="btn" id="b1">한 번 더 ▶</button><button class="btn ghost" id="b3">처음으로</button>',{b1:startS,b3:function(){go('home');}},500);
 }
 
+// ---------- 칠교놀이 ----------
+// 조각: L=큰 삼각형, M=중간 삼각형, S=작은 삼각형, Q=정사각형, R=평행사변형 (한 칸 = 1)
+var TBASE={L:[[0,0],[4,0],[2,2]],M:[[0,0],[2,0],[0,2]],S:[[0,0],[2,0],[1,1]],Q:[[1,0],[2,1],[1,2],[0,1]],R:[[0,0],[2,0],[3,1],[1,1]]};
+var TPCS=[['L','#ff6b6b'],['L','#4dabf7'],['M','#ffd43b'],['S','#51cf66'],['S','#f783ac'],['Q','#ff922b'],['R','#9775fa']];
+var TFIG={"정사각형":[["L",[[0,0],[4,0],[2,2]]],["L",[[0,0],[2,2],[0,4]]],["S",[[4,0],[4,2],[3,1]]],["Q",[[3,1],[4,2],[3,3],[2,2]]],["S",[[2,2],[3,3],[1,3]]],["R",[[0,4],[1,3],[3,3],[2,4]]],["M",[[2,4],[4,2],[4,4]]]],"산":[["L",[[0,4],[4,4],[2,2]]],["L",[[4,0],[4,4],[2,2]]],["S",[[4,0],[4,2],[5,1]]],["Q",[[5,1],[4,2],[5,3],[6,2]]],["S",[[6,2],[5,3],[7,3]]],["R",[[8,4],[7,3],[5,3],[6,4]]],["M",[[6,4],[4,2],[4,4]]]],"물고기":[["L",[[2,0],[2,4],[0,2]]],["L",[[2,0],[2,4],[4,2]]],["M",[[4,2],[6,0],[6,2]]],["S",[[4,2],[6,2],[5,3]]],["S",[[6,2],[6,4],[5,3]]],["R",[[2,-2],[3,-1],[3,1],[2,0]]],["Q",[[3,3],[4,4],[3,5],[2,4]]]],"고양이":[["Q",[[2,0],[3,1],[2,2],[1,1]]],["S",[[1,-1],[1,1],[2,0]]],["S",[[3,-1],[3,1],[2,0]]],["L",[[2,2],[2,6],[0,4]]],["L",[[2,2],[2,6],[4,4]]],["R",[[3,5],[5,5],[4,6],[2,6]]],["M",[[0,4],[0,6],[2,6]]]],"토끼":[["Q",[[2,3],[3,4],[2,5],[1,4]]],["R",[[2,1],[2,3],[1,4],[1,2]]],["S",[[3,2],[3,4],[2,3]]],["L",[[2,5],[2,9],[0,7]]],["L",[[2,5],[2,9],[4,7]]],["M",[[0,7],[0,9],[2,9]]],["S",[[3,8],[5,8],[4,7]]]],"거북이":[["L",[[2,0],[2,4],[0,2]]],["L",[[2,0],[2,4],[4,2]]],["Q",[[4,0],[5,1],[4,2],[3,1]]],["S",[[-1,1],[1,1],[0,2]]],["S",[[-1,3],[1,3],[0,2]]],["M",[[4,2],[4,4],[2,4]]],["R",[[2,-2],[2,0],[1,1],[1,-1]]]],"화살표":[["L",[[4,0],[4,4],[6,2]]],["L",[[0,1],[4,1],[2,3]]],["M",[[0,1],[0,3],[2,3]]],["S",[[2,3],[4,3],[3,2]]],["S",[[4,1],[4,3],[3,2]]],["R",[[-1,0],[1,0],[2,1],[0,1]]],["Q",[[-1,1],[0,2],[-1,3],[-2,2]]]]};
+var TNAMES=Object.keys(TFIG);
+function cen(pts){var x=0,y=0;pts.forEach(function(p){x+=p[0];y+=p[1];});return [x/pts.length,y/pts.length];}
+function tshape(t,rot,flip){var b=TBASE[t],c=cen(b);return b.map(function(p){var x=p[0]-c[0],y=p[1]-c[1];if(flip)x=-x;for(var k=0;k<rot;k++){var nx=-y;y=x;x=nx;}return [x,y];});}
+function sameShape(a,b){if(a.length!==b.length)return false;return a.every(function(p){return b.some(function(q){return Math.abs(p[0]-q[0])<0.02&&Math.abs(p[1]-q[1])<0.02;});});}
+function inPoly(pt,poly){var ins=false;for(var i=0,j=poly.length-1;i<poly.length;j=i++){var xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];if(((yi>pt[1])!==(yj>pt[1]))&&(pt[0]<(xj-xi)*(pt[1]-yi)/(yj-yi)+xi))ins=!ins;}return ins;}
+function figBox(f){var a=[1e9,1e9,-1e9,-1e9];TFIG[f].forEach(function(s){s[1].forEach(function(p){a[0]=Math.min(a[0],p[0]);a[1]=Math.min(a[1],p[1]);a[2]=Math.max(a[2],p[0]);a[3]=Math.max(a[3],p[1]);});});return a;}
+function ptsStr(pts,dx,dy){return pts.map(function(p){return (p[0]+dx).toFixed(3)+','+(p[1]+dy).toFixed(3);}).join(' ');}
+function figThumb(f,col){var b=figBox(f),s='<svg viewBox="'+(b[0]-.5)+' '+(b[1]-.5)+' '+(b[2]-b[0]+1)+' '+(b[3]-b[1]+1)+'" style="width:100%;aspect-ratio:1;display:block">';TFIG[f].forEach(function(sl){s+='<polygon points="'+ptsStr(sl[1],0,0)+'" fill="'+(col||'#495057')+'" stroke="'+(col||'#495057')+'" stroke-width=".04"/>';});return s+'</svg>';}
+function startT(fi){
+  var f=TNAMES[fi],b=figBox(f),land=window.innerWidth>=window.innerHeight,VBW=land?22:12,VBH=land?11:22;
+  var ox=(land?5.5:6)-(b[0]+b[2])/2,oy=5.5-(b[1]+b[3])/2;
+  var slots=TFIG[f].map(function(s){var pts=s[1].map(function(p){return [p[0]+ox,p[1]+oy];}),c=cen(pts);return {t:s[0],pts:pts,c:c,rel:pts.map(function(p){return [p[0]-c[0],p[1]-c[1]];}),used:false};});
+  var tray=land?[[13.6,2],[18.6,2],[12.8,5.6],[16.2,5.6],[19.8,5.6],[13.6,8.8],[17.6,8.8]]:[[3.2,13],[8.8,13],[2.4,16.6],[6,16.6],[9.6,16.6],[3.4,20],[8.2,20]];
+  var easy=D.tanEasy!==false;
+  var pcs=TPCS.map(function(pc,i){var rot=R(0,3),flip=pc[0]==='R'&&Math.random()<.5;
+    if(easy){var sl=slots.filter(function(s){return s.t===pc[0]&&!s.claim;})[0];if(sl){sl.claim=1;for(var k=0;k<8;k++){var r2=k%4,f2=k>=4;if(sameShape(tshape(pc[0],r2,f2),sl.rel)){rot=r2;flip=f2;break;}}}}
+    return {i:i,t:pc[0],col:pc[1],rot:rot,flip:flip,x:tray[i][0],y:tray[i][1],locked:false,miss:0};});
+  slots.forEach(function(s){delete s.claim;});
+  G={kind:'tan',fi:fi,f:f,slots:slots,pcs:pcs,VBW:VBW,VBH:VBH,land:land,easy:easy,hints:0,locked:0,done:false,drag:null,hintSlot:null};
+  go('tan');say(f+' 모양을 만들어 봐요! 조각을 톡 누르면 돌아가요.');
+}
+function rTan(){
+  app.innerHTML='<div class="hud"><button class="pill" onclick="App.home()">◀</button><span class="pill">🔷 '+G.f+'</span><span class="pill" id="cnt"></span><span class="grow"></span><span class="pill" style="font-size:17px">톡 누르면 🔄 돌기</span></div><div id="area"><svg id="tsvg" viewBox="0 0 '+G.VBW+' '+G.VBH+'" style="width:100%;height:100%;display:block;touch-action:none"></svg><div class="msg" id="msg" style="opacity:0"></div></div>';
+  drawT();bindT();rTcnt();
+}
+function rTcnt(){var e=document.getElementById('cnt');if(e)e.innerHTML='🔷 '+G.locked+' / 7';}
+function drawT(){
+  var s='<rect x="'+(G.land?0.2:0.2)+'" y="0.2" width="'+(G.land?10.6:11.6)+'" height="10.6" rx=".5" fill="#fff"/>';
+  G.slots.forEach(function(sl,k){s+='<polygon points="'+ptsStr(sl.pts,0,0)+'" fill="#868e96" stroke="'+(G.easy?'#fff':'#868e96')+'" stroke-width="'+(G.easy?'.06':'.04')+'" stroke-linejoin="round"/>';});
+  if(G.hintSlot)s+='<polygon class="hl" points="'+ptsStr(G.hintSlot.pts,0,0)+'" fill="none" stroke="#ffd43b" stroke-width=".16" stroke-linejoin="round"><animate attributeName="opacity" values="1;.3;1" dur="1s" repeatCount="indefinite"/></polygon>';
+  var order=G.pcs.slice().sort(function(a,b){return (a.locked?0:1)-(b.locked?0:1)||(a.z||0)-(b.z||0);});
+  order.forEach(function(p){s+='<polygon id="tp'+p.i+'" points="'+ptsStr(tshape(p.t,p.rot,p.flip),p.x,p.y)+'" fill="'+p.col+'" stroke="#fff" stroke-width=".07" stroke-linejoin="round"/>';});
+  document.getElementById('tsvg').innerHTML=s;
+}
+function setTP(p){var e=document.getElementById('tp'+p.i);if(e)e.setAttribute('points',ptsStr(tshape(p.t,p.rot,p.flip),p.x,p.y));}
+function bindT(){
+  var sv=document.getElementById('tsvg');
+  function loc(ev){var pt=sv.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;var r=pt.matrixTransform(sv.getScreenCTM().inverse());return [r.x,r.y];}
+  sv.onpointerdown=function(ev){if(G.drag||G.done)return;ac();var q=loc(ev),best=null;
+    G.pcs.forEach(function(p){if(p.locked)return;var poly=tshape(p.t,p.rot,p.flip).map(function(v){return [v[0]+p.x,v[1]+p.y];});if(inPoly(q,poly)&&(!best||(p.z||0)>(best.z||0)))best=p;});
+    if(!best)return;ev.preventDefault();G.z=(G.z||0)+1;best.z=G.z;var e=document.getElementById('tp'+best.i);e.parentNode.appendChild(e);
+    G.drag={p:best,id:ev.pointerId,dx:q[0]-best.x,dy:q[1]-best.y,sx:q[0],sy:q[1],t:Date.now(),moved:false};try{sv.setPointerCapture(ev.pointerId);}catch(er){}sfx('pick');};
+  sv.onpointermove=function(ev){var d=G.drag;if(!d||d.id!==ev.pointerId)return;var q=loc(ev);if(Math.abs(q[0]-d.sx)+Math.abs(q[1]-d.sy)>0.2)d.moved=true;if(!d.moved)return;
+    d.p.x=Math.max(0.5,Math.min(G.VBW-0.5,q[0]-d.dx));d.p.y=Math.max(0.5,Math.min(G.VBH-0.5,q[1]-d.dy));setTP(d.p);};
+  sv.onpointerup=sv.onpointercancel=function(ev){var d=G.drag;if(!d||d.id!==ev.pointerId)return;G.drag=null;var p=d.p;
+    if(!d.moved&&Date.now()-d.t<500){ // 톡 → 돌리기
+      if(p.t==='R'){p.rot++;if(p.rot>3){p.rot=0;p.flip=!p.flip;}}else p.rot=(p.rot+1)%4;setTP(p);sfx('slide');}
+    dropT(p,d.moved);};
+}
+function dropT(p,moved){
+  var shp=tshape(p.t,p.rot,p.flip),best=null,bd=1e9;
+  G.slots.forEach(function(sl){if(sl.used||sl.t!==p.t||!sameShape(shp,sl.rel))return;var dd=Math.hypot(sl.c[0]-p.x,sl.c[1]-p.y);if(dd<bd){bd=dd;best=sl;}});
+  if(best&&bd<0.95){best.used=true;p.locked=true;p.x=best.c[0];p.y=best.c[1];G.locked++;sfx('snap');rTcnt();if(G.hintSlot===best)G.hintSlot=null;drawT();
+    if(G.locked===7){G.done=true;setTimeout(winT,400);}else if(G.locked===1||Math.random()<.2)flash(pick(['딸깍! 잘했어요 👍','맞았어요! ✨','최고예요! 🌟']));return;}
+  if(!moved)return;
+  var inFig=G.slots.some(function(sl){return inPoly([p.x,p.y],sl.pts);});
+  if(!inFig)return;
+  p.miss++;sfx('no');
+  var free=G.slots.filter(function(sl){return !sl.used&&sl.t===p.t;});
+  if(p.miss>=2&&free.length){if(!p.hinted){p.hinted=true;G.hints++;}var tgt=free[0];G.hintSlot=tgt;drawT();
+    flash(sameShape(shp,tgt.rel)?'💡 반짝이는 자리에 놓아 봐요':'💡 반짝이는 자리예요. 톡 눌러서 돌려 봐요 🔄');}
+  else flash(free.some(function(sl){return sameShape(shp,sl.rel);})?'여기가 아닌가 봐요. 다른 자리를 찾아봐요 🤔':'모양이 안 맞아요. 톡 눌러서 돌려 봐요 🔄');
+}
+function winT(){
+  var s=G.hints===0?3:(G.hints<=2?2:1),f=G.f;D.tan=D.tan||{};if(!D.tan[f]||s>D.tan[f])D.tan[f]=s;save();
+  sfx('win');confetti();say(f+' 완성! 정말 잘했어요!');var nx=(G.fi+1)%TNAMES.length;
+  overlay('<div style="max-width:240px;margin:0 auto">'+figThumb(f,'#20c997')+'</div><div style="font-size:30px;margin-top:8px">'+f+' 완성!</div><div class="rate">'+stars(s)+'</div>'+(s<3?'<div style="font-size:18px;color:#5f7f78">반짝이 도움 없이 맞추면 ★★★</div>':'')+
+    '<button class="btn" id="b1">다음 모양 ▶</button><button class="btn ghost" id="b2">한 번 더</button><button class="btn ghost" id="b3">모양 고르기</button>',{b1:function(){D.tfig=nx;save();startT(nx);},b2:function(){startT(G.fi);},b3:function(){go('home');}},600);
+}
 // ---------- 공통 ----------
 function overlay(html,acts,delay){setTimeout(function(){if(!G)return;var o=document.createElement('div');o.className='overlay';o.innerHTML='<div class="panel">'+html+'</div>';document.body.appendChild(o);
   Object.keys(acts).forEach(function(k){var b=o.querySelector('#'+k);if(b)b.onclick=function(){o.remove();acts[k]();};});},delay||0);}
@@ -550,11 +630,12 @@ function confetti(){var em=['🎉','⭐','🎊','✨','🧩'];for(var i=0;i<22;i
   s.style.animationDuration=(1.6+Math.random()*1.6)+'s';s.style.animationDelay=(Math.random()*0.5)+'s';document.body.appendChild(s);(function(n){setTimeout(function(){n.remove();},4000);})(s);}}
 window.addEventListener('resize',function(){
   if(scr==='jig'&&G&&G.L&&!G.drag){var a=document.getElementById('area');if(a&&(Math.abs(a.clientWidth-G.lw)>40||Math.abs(a.clientHeight-G.lh)>40))layoutJ();}
-  else if(scr==='slide'&&G&&G.S)layoutS();});
+  else if(scr==='slide'&&G&&G.S)layoutS();
+  else if(scr==='tan'&&G&&!G.drag&&(window.innerWidth>=window.innerHeight)!==G.land)startT(G.fi);});
 window.App={
   tab:function(t){D.tab=t;save();rHome();},theme:function(i){D.theme=i;save();rHome();},pic:function(i){D.pic=i;save();rHome();},size:function(n){D.size=n;save();rHome();},
   smode:function(m){D.smode=m;save();rHome();},ssize:function(z){D.ssize=z;save();rHome();},set:function(k){D[k]=!D[k];save();rHome();},
-  start:function(){if(D.tab==='jig')startJ(D.pic,D.size);else startS();},home:function(){G=null;go('home');},
+  start:function(){if(D.tab==='jig')startJ(D.pic,D.size);else if(D.tab==='tan')startT(D.tfig||0);else startS();},tfig:function(i){D.tfig=i;save();rHome();},teasy:function(){D.tanEasy=D.tanEasy===false;save();rHome();},home:function(){G=null;go('home');},
   ghost:function(){G.ghost=!G.ghost;D.ghost=G.ghost;save();document.getElementById('gimg').style.opacity=G.ghost?0.3:0;document.getElementById('gh').className='pill'+(G.ghost?' on':'');},
   nums:function(){G.nums=!G.nums;D.nums=G.nums;save();rSlide();},reshuf:function(){startS();}
 };
