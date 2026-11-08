@@ -69,7 +69,7 @@ function render(){
   var total=mStars+zStars+hStars+qStars+ckS;
   var who=name?esc(name)+(hasB(name)?'이의':'의'):'우리 아이';
   var h='<h1>🎈 '+who+' 놀이터</h1><div class="sub">오늘은 무엇을 하고 놀까요?</div>';
-  if(HB.profiles.length){h+='<div class="profs">';HB.profiles.forEach(function(x,i){h+='<button class="prof'+(PF&&x.id===PF.id?' on':'')+'" onclick="pickProf(\''+x.id+'\')"><span class="pe">'+FACE[i%FACE.length]+'</span> '+esc(x.name)+'<small>'+GRN[x.grade]+'</small></button>';});h+='<button class="prof add" onclick="editProf(true)">＋ 아이 추가</button></div>';}
+  if(HB.profiles.length){h+='<div class="profs">';HB.profiles.forEach(function(x,i){h+='<button class="prof'+(PF&&x.id===PF.id?' on':'')+'" onclick="pickProf(\''+x.id+'\')"><span class="pe">'+FACE[i%FACE.length]+'</span> '+esc(x.name)+'<small>'+GRN[x.grade]+'</small></button>';});h+='<button class="prof add" onclick="editProf()">✏️ 이름·학년 바꾸기</button></div>';}
   h+='<div class="total"><span class="chip">⭐ 모은 별 '+total+'개</span><span class="chip">🎁 스티커 '+mSt+'개</span></div><div class="apps">';
   h+='<a class="app" href="math.html" style="background:#ffe8c9"><div class="em">🦉</div><div class="name">수학 놀이터</div><div class="prog">'+(tod&&tod.done?'오늘 문제 다 풀었어요! 🎉':'오늘 문제 '+mDone+' / '+mTot)+'<br>⭐ '+mStars+'</div><div class="bar"><div style="width:'+Math.round(mDone/mTot*100)+'%"></div></div></a>';
   h+='<a class="app" href="maze.html" style="background:#e5e0ff"><div class="em">🧭</div><div class="name">미로 탐험대</div><div class="prog">깬 스테이지 '+zClear+' / 30<br>⭐ '+zStars+'</div><div class="bar"><div style="width:'+Math.round(zClear/30*100)+'%"></div></div></a>';
@@ -77,7 +77,7 @@ function render(){
   h+='<a class="app" href="memory.html" style="background:#ffe0ec"><div class="em">🃏</div><div class="name">짝 맞추기</div><div class="prog">깬 난이도 '+qDone+' / 4<br>⭐ '+qStars+'</div><div class="bar"><div style="width:'+Math.round(qDone/4*100)+'%"></div></div></a>';
   h+='<a class="app" href="hospital.html" style="background:#d9f2ee"><div class="em">🏥</div><div class="name">동물 병원</div><div class="prog">치료한 환자 '+(HP.healed||0)+'명<br>고친 병 '+Object.keys(HP.kinds||{}).length+' / 12</div><div class="bar"><div style="width:'+Math.round(Object.keys(HP.kinds||{}).length/12*100)+'%"></div></div></a>';
   h+='<a class="app" href="clock.html" style="background:#e3e9ff"><div class="em">🕐</div><div class="name">시계 놀이</div><div class="prog">열린 단계 '+(CK.unlocked||1)+' / 5<br>⭐ '+ckS+'</div><div class="bar"><div style="width:'+Math.round((CK.unlocked||1)/5*100)+'%"></div></div></a>';
-  h+='</div><div class="foot"><button onclick="editProf()">✏️ 이름·학년 바꾸기</button></div>';
+  h+='</div>';
   document.getElementById('app').innerHTML=h;
   if(!PF&&!render.asked){render.asked=true;editProf(true);}
 }
@@ -86,9 +86,10 @@ function editProf(isNew){
   var H=hub(),P=isNew?null:curProf(H),g=P?P.grade:(H.profiles.length?'K':'2');
   var o=document.createElement('div');o.className='overlay';
   function draw(){o.innerHTML='<div class="panel"><div style="font-size:56px">'+(isNew?'👋':'✏️')+'</div><div style="font-size:26px">'+(isNew?'놀이터에 올 아이를 알려 주세요':'이름·학년 바꾸기')+'</div><input id="nm" maxlength="8" value="'+esc(P?P.name:(o.nm||''))+'" placeholder="이름 (예: 하늘)"><div style="font-size:18px;color:#8a7a70;margin:4px 0 8px">수학 문제 학년</div><div class="grs">'+
-    ['K','1','2','3'].map(function(k){return '<button class="gr'+(g===k?' on':'')+'" data-g="'+k+'">'+GRN[k]+'</button>';}).join('')+'</div><button id="ok">좋아요</button>'+(H.profiles.length||!isNew?'<button id="cx" class="cx">취소</button>':'')+'</div>';
+    ['K','1','2','3'].map(function(k){return '<button class="gr'+(g===k?' on':'')+'" data-g="'+k+'">'+GRN[k]+'</button>';}).join('')+'</div><button id="ok">좋아요</button>'+(H.profiles.length||!isNew?'<button id="cx" class="cx">취소</button>':'')+(!isNew?'<button id="addk" class="cx" style="font-size:16px!important">＋ 다른 아이 추가하기</button>':'')+'</div>';
     Array.prototype.forEach.call(o.querySelectorAll('.gr'),function(b){b.onclick=function(){o.nm=o.querySelector('#nm').value;if(P)P.name=o.nm;g=b.getAttribute('data-g');draw();};});
     var cx=o.querySelector('#cx');if(cx)cx.onclick=function(){o.remove();};
+    var ak=o.querySelector('#addk');if(ak)ak.onclick=function(){o.remove();editProf(true);};
     o.querySelector('#ok').onclick=function(){var v=o.querySelector('#nm').value.trim();if(!v){o.querySelector('#nm').focus();return;}
       if(isNew){var id=H.profiles.length?'p'+Date.now().toString(36):'p1';H.profiles.push({id:id,name:v,grade:g});H.cur=id;}
       else{var gChanged=P.grade!==g;P.name=v;P.grade=g;var M2=get(mathKey(P.id));if(M2){M2.settings=M2.settings||{};M2.settings.name=v;if(gChanged){delete M2.levels;M2.session=null;M2.review=[];}put(mathKey(P.id),M2);}}
