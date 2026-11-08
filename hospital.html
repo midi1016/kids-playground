@@ -57,6 +57,11 @@ svg.pt{height:100%;max-height:100%;width:auto;flex:1;min-height:0}
 @keyframes fly{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}70%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
 .mark{animation:pulse .8s ease-in-out infinite alternate}
 @keyframes pulse{from{opacity:.35}to{opacity:.9}}
+.act{text-align:center}.hand{font-size:54px;animation:wig 1s ease-in-out infinite alternate}
+@keyframes wig{from{transform:translateX(-12px) rotate(-8deg)}to{transform:translateX(12px) rotate(8deg)}}
+.pbar{height:18px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 20px 4px}.pbar>div{height:100%;width:0;background:var(--main);border-radius:99px;transition:width .15s}
+.bub{animation:bubfade .9s forwards}@keyframes bubfade{to{opacity:0;transform:translateY(-14px)}}
+.floaty{animation:floaty .9s forwards}@keyframes floaty{to{opacity:0;transform:translateY(-30px)}}
 .overlay{position:fixed;inset:0;background:rgba(20,50,45,.5);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
 .panel{background:#fff;border-radius:28px;padding:24px;max-width:520px;width:100%;text-align:center}
 .conf{position:fixed;top:-60px;font-size:36px;pointer-events:none;z-index:11;animation:fall linear forwards}
@@ -75,10 +80,102 @@ function hasB(w){var c=w.charCodeAt(w.length-1);if(c<0xAC00||c>0xD7A3)return fal
 function J(w,p){var m={'이가':['이','가'],'은는':['은','는'],'을를':['을','를'],'아야':['아','야']};return w+(hasB(w)?m[p][0]:m[p][1]);}
 
 // ---------- 환자와 도구 ----------
-var ANIMALS=[['🐶','멍멍이','#e8c39e'],['🐱','야옹이','#f6c97f'],['🐰','깡총이','#f1e4e8'],['🐻','곰돌이','#b98a64'],['🐼','판다','#eeeeee'],['🦊','여우','#f0a35c'],
-  ['🐯','호랑이','#f5b04c'],['🐨','코알라','#c7c9cc'],['🐷','꿀꿀이','#f8b8c6'],['🐸','개굴이','#9ad27a'],['🐵','원숭이','#c99a6e'],['🦁','사자','#f3c063'],['🐮','음매','#f2efe9'],['🐧','펭귄','#5d6a7a']];
+var ANIMALS=[
+  {k:'dog',n:'멍멍이',e:'🐶',c:'#e3ab70',b:'#f8e6cc',ear:'floppy',ec:'#9e6a3c',nose:'oval',tail:'short'},
+  {k:'cat',n:'야옹이',e:'🐱',c:'#f4b860',b:'#fff2d9',ear:'pointy',ei:'#f7a8b8',nose:'pinktri',tail:'long',stripe:'cat',whisk:1},
+  {k:'rabbit',n:'깡총이',e:'🐰',c:'#f7f2ef',b:'#ffffff',ear:'long',ei:'#f7b6c2',nose:'pinktri',tail:'puff',teeth:1},
+  {k:'bear',n:'곰돌이',e:'🐻',c:'#aa7650',b:'#dcb894',ear:'round',ei:'#dcb894',nose:'oval',muzzle:'#dcb894',tail:'none'},
+  {k:'panda',n:'판다',e:'🐼',c:'#ffffff',b:'#ffffff',limb:'#2f2f2f',ear:'round',ec:'#2f2f2f',ei:'#2f2f2f',nose:'oval',patch:'panda',tail:'none'},
+  {k:'fox',n:'여우',e:'🦊',c:'#f08a3e',b:'#fff4e8',ear:'pointy',ei:'#fff4e8',nose:'oval',cheek:'#fff4e8',tail:'bushy',feet:'#5a3a2a'},
+  {k:'tiger',n:'호랑이',e:'🐯',c:'#f6a63e',b:'#fff4e0',ear:'round',ei:'#fff4e0',nose:'pinktri',muzzle:'#fff4e0',stripe:'tiger',tail:'striped'},
+  {k:'pig',n:'꿀꿀이',e:'🐷',c:'#f8bac7',b:'#ffd6df',ear:'pig',ei:'#f59fb2',nose:'snout',tail:'curly'},
+  {k:'frog',n:'개굴이',e:'🐸',c:'#8fd16f',b:'#e4f7cb',ear:'none',nose:'dots',frog:1,tail:'none'},
+  {k:'penguin',n:'펭귄',e:'🐧',c:'#3e4b5e',b:'#ffffff',ear:'none',nose:'beak',penguin:1,tail:'none',feet:'#ffa63c'},
+  {k:'lion',n:'사자',e:'🦁',c:'#f6c76c',b:'#fff1d0',ear:'round',ei:'#fff1d0',nose:'oval',muzzle:'#fff1d0',mane:'#d48a35',tail:'tuft'},
+  {k:'koala',n:'코알라',e:'🐨',c:'#b8bec5',b:'#e8eaec',ear:'fluffy',ei:'#f3f3f3',nose:'big',tail:'none'},
+  {k:'monkey',n:'원숭이',e:'🐵',c:'#a9774e',b:'#f2cfa6',ear:'side',ei:'#f2cfa6',nose:'nostril',face:'#f2cfa6',tail:'curl'}
+];
 // 몸 위치 (환자 그림 300x430 기준)
-var SPOT={head:[150,30],forehead:[150,58],eye:[122,92],ear:[88,48],mouth:[150,132],chest:[150,228],tummy:[150,285],arm:[44,300],knee:[110,372],leg:[190,378],foot:[192,414]};
+var SPOT={head:[150,46],forehead:[150,74],eye:[123,112],ear:[78,58],mouth:[150,154],chest:[150,240],tummy:[150,296],arm:[64,290],knee:[122,366],leg:[178,368],foot:[180,404]};
+var OUT='#4a3b33';
+function sh(d,fill,w){return '<path d="'+d+'" fill="'+(fill||'none')+'" stroke="'+OUT+'" stroke-width="'+(w||3.5)+'" stroke-linejoin="round" stroke-linecap="round"/>';}
+function el(cx,cy,rx,ry,fill,w,rot){return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="'+fill+'" stroke="'+(w===0?'none':OUT)+'" stroke-width="'+(w||3.5)+'"'+(rot?' transform="rotate('+rot+' '+cx+' '+cy+')"':'')+'/>';}
+function limb(x1,y1,x2,y2,w,c){var d='M'+x1+' '+y1+'L'+x2+' '+y2;return '<path d="'+d+'" stroke="'+OUT+'" stroke-width="'+(w+7)+'" stroke-linecap="round" fill="none"/><path d="'+d+'" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round" fill="none"/>';}
+function drawAnimal(a,mood){
+  var c=a.c,lc=a.limb||c,h='';
+  // 그림자, 꼬리
+  h+='<ellipse cx="150" cy="420" rx="100" ry="8" fill="rgba(0,0,0,.08)"/>';
+  if(a.tail==='short')h+=sh('M206 300q30 -14 26 -40q-12 6 -28 24',c);
+  else if(a.tail==='long')h+='<path d="M204 310q60 0 54 -60q-4 -30 18 -40" stroke="'+OUT+'" stroke-width="20" fill="none" stroke-linecap="round"/><path d="M204 310q60 0 54 -60q-4 -30 18 -40" stroke="'+c+'" stroke-width="13" fill="none" stroke-linecap="round"/>';
+  else if(a.tail==='puff')h+=el(212,318,20,18,'#fff');
+  else if(a.tail==='bushy')h+=sh('M200 320q70 10 80 -60q4 -40 -22 -58q4 40 -20 70q-20 24 -40 26z',c)+sh('M258 202q4 -2 0 0q16 10 22 30q-14 -4 -26 -16q-2 -8 4 -14z','#fff4e8');
+  else if(a.tail==='striped')h+='<path d="M204 312q56 6 56 -46q0 -24 16 -36" stroke="'+OUT+'" stroke-width="20" fill="none" stroke-linecap="round"/><path d="M204 312q56 6 56 -46q0 -24 16 -36" stroke="'+c+'" stroke-width="13" fill="none" stroke-linecap="round"/><path d="M238 300l6 -12M256 272l10 -4M262 246l10 2" stroke="#3a2a20" stroke-width="4" stroke-linecap="round"/>';
+  else if(a.tail==='curly')h+='<path d="M206 300q22 -6 18 -20q-4 -10 -12 -4q-6 8 6 10q16 0 18 -14" stroke="'+OUT+'" stroke-width="5" fill="none" stroke-linecap="round"/>';
+  else if(a.tail==='tuft')h+='<path d="M204 312q48 2 50 -40" stroke="'+OUT+'" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M204 312q48 2 50 -40" stroke="'+c+'" stroke-width="8" fill="none" stroke-linecap="round"/>'+sh('M254 272q-14 -10 -6 -26q10 6 14 -4q8 14 -8 30z',a.mane||'#c47a2c');
+  else if(a.tail==='curl')h+='<path d="M204 316q60 4 58 -44q-2 -26 -24 -22q-16 4 -8 18" stroke="'+OUT+'" stroke-width="16" fill="none" stroke-linecap="round"/><path d="M204 316q60 4 58 -44q-2 -26 -24 -22q-16 4 -8 18" stroke="'+c+'" stroke-width="9" fill="none" stroke-linecap="round"/>';
+  // 다리와 발
+  h+=limb(124,330,122,388,34,lc)+limb(176,330,178,388,34,lc);
+  var fc=a.feet||lc;h+=el(118,398,26,14,fc)+el(182,398,26,14,fc);
+  // 몸
+  h+=el(150,284,68,74,c)+'<ellipse cx="150" cy="298" rx="42" ry="48" fill="'+a.b+'"/>';
+  if(a.stripe==='tiger')h+='<path d="M92 270q12 4 18 -4M90 300q12 4 18 -4M208 270q-12 4 -18 -4M210 300q-12 4 -18 -4" stroke="#3a2a20" stroke-width="5" fill="none" stroke-linecap="round"/>';
+  // 팔
+  if(a.penguin)h+=sh('M96 232q-40 30 -36 74q22 -10 40 -40z',c)+sh('M204 232q40 30 36 74q-22 -10 -40 -40z',c);
+  else h+=limb(102,236,68,290,28,lc)+limb(198,236,232,290,28,lc)+el(64,296,15,14,lc)+el(236,296,15,14,lc);
+  // 갈기, 귀
+  if(a.mane){var m='';for(var i=0;i<16;i++){var an=i*Math.PI/8,r1=100,x=150+r1*Math.cos(an),y=112+r1*0.92*Math.sin(an);m+=el(Math.round(x),Math.round(y),26,26,a.mane,3);}h+=m;}
+  var ec=a.ec||c,ei=a.ei||a.b;
+  if(a.ear==='floppy')h+=sh('M78 66q-34 10 -30 70q4 30 24 22q18 -8 20 -60z',ec)+sh('M222 66q34 10 30 70q-4 30 -24 22q-18 -8 -20 -60z',ec);
+  else if(a.ear==='pointy')h+=sh('M76 82l4 -66l56 34z',c)+sh('M224 82l-4 -66l-56 34z',c)+'<path d="M86 66l2 -34l28 18z" fill="'+ei+'"/><path d="M214 66l-2 -34l-28 18z" fill="'+ei+'"/>'+(a.k==='fox'?'<path d="M80 18l-2 16l14 -8z" fill="#4a3b33"/><path d="M220 18l2 16l-14 -8z" fill="#4a3b33"/>':'');
+  else if(a.ear==='long')h+=sh('M104 60q-26 -60 -6 -96q22 4 30 90z',c)+sh('M196 60q26 -60 6 -96q-22 4 -30 90z',c)+'<path d="M108 52q-16 -44 -6 -76q12 6 16 72z" fill="'+ei+'"/><path d="M192 52q16 -44 6 -76q-12 6 -16 72z" fill="'+ei+'"/>';
+  else if(a.ear==='round')h+=el(84,50,26,26,ec)+el(216,50,26,26,ec)+'<circle cx="86" cy="52" r="13" fill="'+ei+'"/><circle cx="214" cy="52" r="13" fill="'+ei+'"/>';
+  else if(a.ear==='pig')h+=sh('M80 68l-6 -48l50 24z',c)+sh('M220 68l6 -48l-50 24z',c)+'<path d="M84 58l-2 -28l26 14z" fill="'+ei+'"/><path d="M216 58l2 -28l-26 14z" fill="'+ei+'"/>';
+  else if(a.ear==='fluffy')h+=el(70,64,40,38,c)+el(230,64,40,38,c)+'<circle cx="74" cy="66" r="22" fill="'+ei+'"/><circle cx="226" cy="66" r="22" fill="'+ei+'"/>';
+  else if(a.ear==='side')h+=el(64,118,24,26,c)+el(236,118,24,26,c)+'<circle cx="66" cy="118" r="13" fill="'+ei+'"/><circle cx="234" cy="118" r="13" fill="'+ei+'"/>';
+  // 머리
+  if(a.frog)h+=el(108,52,26,26,c)+el(192,52,26,26,c);
+  h+=el(150,118,88,80,c);
+  if(a.frog)h+='<ellipse cx="150" cy="98" rx="84" ry="40" fill="'+c+'"/>';
+  // 얼굴 무늬
+  if(a.face)h+='<path d="M150 98q-18 -26 -44 -14q-26 16 -14 52q14 40 58 42q44 -2 58 -42q12 -36 -14 -52q-26 -12 -44 14z" fill="'+a.face+'"/>';
+  if(a.penguin)h+='<path d="M150 82q-26 -22 -52 -2q-22 22 -6 62q20 34 58 36q38 -2 58 -36q16 -40 -6 -62q-26 -20 -52 2z" fill="#fff"/>';
+  if(a.cheek)h+='<path d="M66 132q30 -6 52 14q-10 30 -40 26q-18 -14 -12 -40z" fill="'+a.cheek+'"/><path d="M234 132q-30 -6 -52 14q10 30 40 26q18 -14 12 -40z" fill="'+a.cheek+'"/>';
+  if(a.muzzle)h+='<ellipse cx="150" cy="150" rx="36" ry="27" fill="'+a.muzzle+'"/>';
+  if(a.k==='dog')h+='<ellipse cx="150" cy="150" rx="36" ry="27" fill="'+a.b+'"/><ellipse cx="180" cy="108" rx="22" ry="20" fill="#c98d52"/>';
+  if(a.k==='pig')h+='';
+  if(a.patch==='panda')h+='<ellipse cx="120" cy="114" rx="20" ry="25" fill="#2f2f2f" transform="rotate(25 120 114)"/><ellipse cx="180" cy="114" rx="20" ry="25" fill="#2f2f2f" transform="rotate(-25 180 114)"/>';
+  if(a.stripe==='tiger')h+='<path d="M150 42v18M134 46l4 14M166 46l-4 14M64 110h18M64 128h14M236 110h-18M236 128h-14" stroke="#3a2a20" stroke-width="5" stroke-linecap="round"/>';
+  if(a.stripe==='cat')h+='<path d="M150 44v16M138 48l3 12M162 48l-3 12" stroke="#d98a2b" stroke-width="5" stroke-linecap="round"/>';
+  // 눈
+  var ex=[123,177],ey=a.frog?52:112,eyeC=a.patch==='panda'?'#fff':'#2b2220';
+  if(a.frog)h+='<circle cx="108" cy="52" r="14" fill="#fff"/><circle cx="192" cy="52" r="14" fill="#fff"/>',ex=[108,192];
+  if(mood==='happy'){ex.forEach(function(x){h+='<path d="M'+(x-11)+' '+(ey+3)+'q11 -14 22 0" stroke="'+eyeC+'" stroke-width="5" fill="none" stroke-linecap="round"/>';});}
+  else if(mood==='ouch'){h+='<path d="M'+(ex[0]-10)+' '+(ey-8)+'l14 8l-14 8M'+(ex[1]+10)+' '+(ey-8)+'l-14 8l14 8" stroke="'+eyeC+'" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';}
+  else if(mood==='cry'){ex.forEach(function(x,i){h+='<path d="M'+(x-11)+' '+(ey)+'q11 9 22 0" stroke="'+eyeC+'" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M'+(x-12)+' '+(ey-18)+'l24 '+(i?-6:6)+'" stroke="'+eyeC+'" stroke-width="4" stroke-linecap="round" transform="scale(1)"/>';});
+    h+='<path d="M'+(ex[0]-6)+' '+(ey+10)+'q-6 14 0 18q6 -4 0 -18zM'+(ex[1]+6)+' '+(ey+10)+'q-6 14 0 18q6 -4 0 -18z" fill="#6ec6ff" stroke="#3a9ad9" stroke-width="2"/>';}
+  else{ex.forEach(function(x){h+='<ellipse cx="'+x+'" cy="'+ey+'" rx="9" ry="12" fill="'+eyeC+'"/><circle cx="'+(x+3)+'" cy="'+(ey-4)+'" r="3.5" fill="'+(eyeC==='#fff'?'#2b2220':'#fff')+'"/>';});}
+  // 볼
+  if(mood==='happy'||mood==='ouch')h+='<ellipse cx="100" cy="140" rx="14" ry="9" fill="#ff8fa3" opacity=".55"/><ellipse cx="200" cy="140" rx="14" ry="9" fill="#ff8fa3" opacity=".55"/>';
+  // 코
+  if(a.nose==='oval')h+='<ellipse cx="150" cy="140" rx="12" ry="8" fill="#3b2a24"/>';
+  else if(a.nose==='pinktri')h+='<path d="M141 136h18l-9 9z" fill="#f48aa0" stroke="'+OUT+'" stroke-width="2" stroke-linejoin="round"/>';
+  else if(a.nose==='snout')h+=el(150,144,26,18,'#f59fb2',3)+'<ellipse cx="141" cy="144" rx="4" ry="7" fill="#b55a6e"/><ellipse cx="159" cy="144" rx="4" ry="7" fill="#b55a6e"/>';
+  else if(a.nose==='dots')h+='<circle cx="140" cy="128" r="3" fill="#2b2220"/><circle cx="160" cy="128" r="3" fill="#2b2220"/>';
+  else if(a.nose==='beak')h+='<path d="M136 134h28l-14 16z" fill="#ffa63c" stroke="'+OUT+'" stroke-width="3" stroke-linejoin="round"/>';
+  else if(a.nose==='big')h+='<ellipse cx="150" cy="138" rx="15" ry="20" fill="#3b3b40"/>';
+  else if(a.nose==='nostril')h+='<circle cx="144" cy="140" r="3" fill="#5a3a26"/><circle cx="156" cy="140" r="3" fill="#5a3a26"/>';
+  if(a.whisk)h+='<path d="M108 146l-30 -4M108 154l-28 6M192 146l30 -4M192 154l28 6" stroke="'+OUT+'" stroke-width="2" stroke-linecap="round"/>';
+  // 입
+  var my=a.frog?150:(a.nose==='snout'?168:156);
+  if(a.frog&&mood!=='cry'&&mood!=='ouch'){h+='<path d="M112 '+(my-6)+'q38 '+(mood==='happy'?30:16)+' 76 0" stroke="'+OUT+'" stroke-width="4" fill="'+(mood==='happy'?'#d9475b':'none')+'" stroke-linecap="round"/>';my=-999;}
+  if(my<0){}else if(mood==='happy')h+='<path d="M134 '+my+'q16 20 32 0z" fill="#d9475b" stroke="'+OUT+'" stroke-width="3" stroke-linejoin="round"/><path d="M142 '+(my+7)+'q8 6 16 0" fill="#ff8fa3"/>';
+  else if(mood==='cry')h+='<path d="M136 '+(my+8)+'q14 -12 28 0" stroke="'+OUT+'" stroke-width="4" fill="none" stroke-linecap="round"/>';
+  else if(mood==='ouch')h+='<path d="M134 '+(my+2)+'q5 -5 10 0t10 0t10 0t6 0" stroke="'+OUT+'" stroke-width="4" fill="none" stroke-linecap="round"/>';
+  else h+='<path d="M142 '+my+'q8 5 16 0" stroke="'+OUT+'" stroke-width="4" fill="none" stroke-linecap="round"/>';
+  if(a.teeth&&mood!=='cry'&&my>0)h+='<rect x="144" y="'+(my+1)+'" width="12" height="10" rx="2" fill="#fff" stroke="'+OUT+'" stroke-width="2"/>';
+  return h;
+}
+function animalThumb(a,s){return '<svg viewBox="-20 -50 340 480" width="'+s+'" height="'+(s*1.4)+'">'+drawAnimal(a,'calm')+'</svg>';}
 var DIAG={
   steth:{n:'청진기',ic:'🩺',use:'청진기로 숨소리를 들어요. 조금 차가울 수 있어요.'},
   thermo:{n:'체온계',ic:'🌡️',use:'체온계로 열을 재요. 아프지 않아요.'},
@@ -154,116 +251,189 @@ function say(t){if(!D.voice||!window.speechSynthesis)return;try{speechSynthesis.
 document.addEventListener('visibilitychange',function(){if(document.hidden){musicStop();try{speechSynthesis.cancel();}catch(e){}}else if(screen==='ward')musicStart();});
 
 // ---------- 환자 그림 ----------
+function iconG(ic,x,y,s){
+  if(/^[a-z]+$/.test(ic)){var inner=svgIcon(ic,64).replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');return '<g transform="translate('+(x-s/2)+' '+(y-s/2)+') scale('+(s/64)+')">'+inner+'</g>';}
+  return '<text x="'+x+'" y="'+(y+s*0.05)+'" font-size="'+s+'" text-anchor="middle" dominant-baseline="middle" class="em">'+ic+'</text>';}
+function moodOf(p){return p.done?'happy':(p.calm?(p.found?'ouch':'calm'):'cry');}
 function patientSvg(p){
-  var c=p.animal[2],s=SPOT[p.sick.spot],marks='';
+  var s=SPOT[p.sick.spot],marks='';
   p.marks.forEach(function(m){var q=SPOT[m.at]||s;
-    if(m.k==='bandaid')marks+='<g transform="translate('+q[0]+' '+q[1]+') rotate(-25)"><rect x="-22" y="-9" width="44" height="18" rx="9" fill="#ffcc80" stroke="#c48a3a" stroke-width="2"/><rect x="-7" y="-6" width="14" height="12" fill="#fff3e0"/></g>';
-    else if(m.k==='bandage')marks+='<g transform="translate('+q[0]+' '+q[1]+')"><rect x="-22" y="-28" width="44" height="56" rx="10" fill="#fff" stroke="#b0bec5" stroke-width="3"/><path d="M-22 -12h44M-22 4h44M-22 18h44" stroke="#cfd8dc" stroke-width="3"/></g>';
-    else if(m.k==='ointment')marks+='<ellipse cx="'+q[0]+'" cy="'+q[1]+'" rx="20" ry="13" fill="rgba(255,255,255,.75)" stroke="#e0f2f1" stroke-width="2"/>';
+    if(m.k==='bandaid')marks+='<g transform="translate('+q[0]+' '+q[1]+') rotate(-25)"><rect x="-24" y="-10" width="48" height="20" rx="10" fill="#ffcc80" stroke="#c48a3a" stroke-width="2"/><rect x="-8" y="-7" width="16" height="14" fill="#fff3e0"/><circle cx="-15" cy="-3" r="1.5" fill="#c48a3a"/><circle cx="15" cy="3" r="1.5" fill="#c48a3a"/></g>';
+    else if(m.k==='bandage')marks+='<g transform="translate('+q[0]+' '+q[1]+')"><rect x="-22" y="-30" width="44" height="58" rx="10" fill="#fff" stroke="#b0bec5" stroke-width="3"/><path d="M-22 -14h44M-22 2h44M-22 16h44" stroke="#cfd8dc" stroke-width="3"/></g>';
+    else if(m.k==='ointment')marks+='<ellipse cx="'+q[0]+'" cy="'+q[1]+'" rx="22" ry="15" fill="rgba(255,255,255,.8)"/><path d="M'+(q[0]-8)+' '+(q[1]-6)+'l4 -4" stroke="#fff" stroke-width="3" stroke-linecap="round"/>';
+    else if(m.k==='blanket')marks+='<path d="M60 250q90 -24 180 0v120q-90 18 -180 0z" fill="#90caf9" stroke="'+OUT+'" stroke-width="3"/><path d="M60 250q90 -24 180 0" stroke="#e3f2fd" stroke-width="10" fill="none"/><text x="230" y="40" font-size="34" class="em">💤</text>';
   });
-  var hurt=p.done?'':'<circle class="mark" cx="'+s[0]+'" cy="'+s[1]+'" r="'+(p.sick.spot==='tummy'||p.sick.spot==='chest'?34:24)+'" fill="#ff5252" opacity=".5"/>';
-  var face=p.done?'😊':(p.found?'😣':'😢');
-  return '<svg class="pt" viewBox="0 0 300 430" id="pt"><ellipse cx="150" cy="424" rx="110" ry="8" fill="rgba(0,0,0,.08)"/>'+
-    '<path d="M100 330L112 410M200 330L190 410" stroke="'+c+'" stroke-width="34" stroke-linecap="round"/><ellipse cx="108" cy="414" rx="26" ry="14" fill="'+c+'" stroke="rgba(0,0,0,.15)" stroke-width="2"/><ellipse cx="192" cy="414" rx="26" ry="14" fill="'+c+'" stroke="rgba(0,0,0,.15)" stroke-width="2"/>'+
-    '<path d="M80 210L42 300M220 210L258 300" stroke="'+c+'" stroke-width="30" stroke-linecap="round"/>'+
-    '<ellipse cx="150" cy="262" rx="82" ry="96" fill="'+c+'" stroke="rgba(0,0,0,.15)" stroke-width="3"/><ellipse cx="150" cy="280" rx="48" ry="56" fill="rgba(255,255,255,.35)"/>'+
-    '<text x="150" y="98" font-size="150" text-anchor="middle" dominant-baseline="middle" class="em">'+p.animal[0]+'</text>'+
-    hurt+marks+'<text x="236" y="40" font-size="44" text-anchor="middle" class="em">'+face+'</text></svg>';
+  var hurt='';
+  if(!p.done){hurt='<circle class="mark" cx="'+s[0]+'" cy="'+s[1]+'" r="'+(p.sick.spot==='tummy'||p.sick.spot==='chest'?36:26)+'" fill="#ff5252" opacity=".45"/>';
+    if(p.sick.id==='splinter'&&!p.splinterOut)hurt+='<path d="M'+(s[0]-6)+' '+(s[1]+6)+'l14 -16" stroke="#6d4c2f" stroke-width="4" stroke-linecap="round"/>';
+    if(p.sick.id==='bump')hurt+='<ellipse cx="'+s[0]+'" cy="'+(s[1]+4)+'" rx="14" ry="10" fill="#ffab91" stroke="'+OUT+'" stroke-width="2"/>';}
+  return '<svg class="pt" viewBox="-20 -50 340 480" id="pt" style="touch-action:none"><defs><clipPath id="spotclip"><circle cx="'+s[0]+'" cy="'+s[1]+'" r="40"/></clipPath></defs>'+
+    drawAnimal(p.animal,moodOf(p))+marks+hurt+'<g id="fxg"></g><g id="actg"></g></svg>';
 }
+
+// ---------- 손가락 동작 ----------
+// type: rub(문지르기) / drag(끌어다 놓기, hold:대고 있기, pull:당기기) / tap(톡)
+var ACTS={
+  pet:{type:'rub',at:'forehead',R:80,need:320,fx:'heart',text:'친구가 울고 있어요. 손가락으로 머리를 쓰다듬어 달래 줘요.',after:'토닥토닥, 이제 괜찮아요.'},
+  medicine:{type:'drag',ic:'💊',at:'mouth',R:50,hold:700,text:'약을 끌어다 입에 쏙 넣어 줘요.',after:'냠냠! 잘 먹었어요.'},
+  water:{type:'drag',ic:'🥤',at:'mouth',R:50,hold:1200,text:'컵을 끌어다 입에 대 줘요.',after:'꿀꺽꿀꺽!'},
+  rest:{type:'tap',text:'친구를 톡 눌러서 이불을 덮어 줘요.',after:'쿨쿨, 푹 쉬어요.'},
+  wash:{type:'rub',R:55,need:420,fx:'water',text:'손가락으로 상처를 살살 문질러서 씻어요.',after:'깨끗해졌어요!'},
+  ointment:{type:'rub',R:55,need:520,fx:'cream',text:'손가락으로 연고를 살살 문질러 발라요.',after:'연고를 골고루 발랐어요.'},
+  bandaid:{type:'drag',ic:'🩹',R:50,text:'반창고를 끌어다 다친 곳에 붙여요.',after:'반창고 붙이기 성공!'},
+  bandage:{type:'rub',R:55,need:620,fx:'wrap',text:'다리를 빙글빙글 문질러서 붕대를 감아요.',after:'붕대를 단단히 감았어요.'},
+  ice:{type:'drag',ic:'🧊',R:55,hold:1500,text:'얼음을 끌어다 아픈 곳에 대 줘요.',after:'시원해요~'},
+  shot:{type:'drag',ic:'💉',at:'arm',R:50,hold:1800,count:1,text:'주사를 끌어다 팔에 대요. 하나, 둘, 셋 하면 끝나요!',after:'따끔! 벌써 끝났어요. 정말 용감해요!'},
+  tooth:{type:'rub',at:'mouth',R:50,need:420,fx:'spark',text:'아픈 이를 손가락으로 문질러서 치료해요.',after:'충치를 깨끗이 치료했어요!'},
+  tweezers:{type:'drag',ic:'tweez',R:50,pull:1,text:'핀셋을 가시에 대고, 바깥으로 쭉 당겨요.',after:'가시를 쏙 뺐어요!'},
+  eyedrop:{type:'drag',ic:'eyedrop',at:'eye',R:45,hold:700,text:'안약을 끌어다 눈 위에 대요. 톡!',after:'눈이 시원해졌어요.'}
+};
+var A=null; // 진행 중인 동작
+function startAct(spec,onDone){
+  var p=W.p,at=spec.at||p.sick.spot,t=SPOT[at];
+  A={s:spec,t:t,acc:0,last:null,item:[262,390],dragging:false,placed:false,holdT:null,pullFrom:null,onDone:onDone,lastFx:0};
+  p.phase='act';p.actText=spec.text;refresh();say(spec.text);drawAct();bindAct();
+}
+function svgPt(ev){var svg=document.getElementById('pt');var pt=svg.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;var m=svg.getScreenCTM();return m?pt.matrixTransform(m.inverse()):{x:0,y:0};}
+function dist(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1]);}
+function prog(){if(!A)return 0;if(A.s.type==='rub')return Math.min(1,A.acc/A.s.need);if(A.holdP!=null)return A.holdP;return A.placed?1:0;}
+function drawAct(){
+  var g=document.getElementById('actg');if(!g||!A)return;var t=A.t,R=A.s.R||50,pr=prog(),c=2*Math.PI*(R+6),h='';
+  h+='<circle cx="'+t[0]+'" cy="'+t[1]+'" r="'+(R+6)+'" fill="none" stroke="#ffffff" stroke-width="9" opacity=".9"/>';
+  h+='<circle cx="'+t[0]+'" cy="'+t[1]+'" r="'+(R+6)+'" fill="none" stroke="#26a69a" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+(c*pr)+' '+c+'" transform="rotate(-90 '+t[0]+' '+t[1]+')"/>';
+  if(A.s.type!=='tap'&&pr===0&&!A.dragging)h+='<circle class="mark" cx="'+t[0]+'" cy="'+t[1]+'" r="'+R+'" fill="none" stroke="#ffc107" stroke-width="4" stroke-dasharray="8 8"/>';
+  if(A.s.type==='drag'&&!A.done){var it=A.item;h+='<g opacity="'+(A.placed&&!A.s.pull?1:1)+'">'+(A.dragging||A.placed?'':'<circle cx="'+it[0]+'" cy="'+it[1]+'" r="38" fill="#fff8e1" stroke="#ffc107" stroke-width="4" class="mark"/>')+iconG(A.s.ic,it[0],it[1],56)+'</g>';}
+  if(A.countTxt)h+='<text x="'+t[0]+'" y="'+(t[1]-R-22)+'" font-size="34" text-anchor="middle" fill="#e65100" stroke="#fff" stroke-width="6" paint-order="stroke" font-family="Jua,sans-serif">'+A.countTxt+'</text>';
+  g.innerHTML=h;
+  var pb=document.getElementById('pbar');if(pb)pb.style.width=Math.round(pr*100)+'%';
+}
+function spawnFx(x,y){
+  var g=document.getElementById('fxg');if(!g)return;var k=A.s.fx,e;
+  var NS='http://www.w3.org/2000/svg';
+  if(k==='cream'){e=document.createElementNS(NS,'circle');e.setAttribute('cx',x);e.setAttribute('cy',y);e.setAttribute('r',9);e.setAttribute('fill','rgba(255,255,255,.55)');e.setAttribute('clip-path','url(#spotclip)');g.appendChild(e);}
+  else if(k==='water'){e=document.createElementNS(NS,'circle');e.setAttribute('cx',x+R2(-8,8));e.setAttribute('cy',y+R2(-8,8));e.setAttribute('r',R2(4,9));e.setAttribute('fill','rgba(179,229,252,.75)');e.setAttribute('stroke','#4fc3f7');e.setAttribute('stroke-width','2');e.setAttribute('class','bub');g.appendChild(e);setTimeout(function(){e.remove();},900);}
+  else if(k==='wrap'){e=document.createElementNS(NS,'path');var t=A.t;e.setAttribute('d','M'+(t[0]-22)+' '+(y)+'h44');e.setAttribute('stroke','#fff');e.setAttribute('stroke-width','7');e.setAttribute('opacity','.95');g.appendChild(e);var e2=document.createElementNS(NS,'path');e2.setAttribute('d','M'+(t[0]-22)+' '+(y+4)+'h44');e2.setAttribute('stroke','#cfd8dc');e2.setAttribute('stroke-width','2');g.appendChild(e2);}
+  else{e=document.createElementNS(NS,'text');e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('font-size',k==='heart'?26:22);e.setAttribute('text-anchor','middle');e.setAttribute('class','em floaty');e.textContent=k==='heart'?'💖':'✨';g.appendChild(e);setTimeout(function(){e.remove();},900);}
+}
+function R2(a,b){return a+Math.random()*(b-a);}
+function bindAct(){
+  var svg=document.getElementById('pt');if(!svg)return;
+  svg.onpointerdown=function(ev){if(!A||A.done)return;try{svg.setPointerCapture(ev.pointerId);}catch(e){}var q=svgPt(ev),pt=[q.x,q.y];ac();
+    if(A.s.type==='tap'){finishAct();return;}
+    if(A.s.type==='rub'){A.rubbing=true;A.last=pt;return;}
+    if(A.s.type==='drag'){if(A.placed&&A.s.pull){if(dist(pt,A.t)<70){A.pulling=true;A.pullFrom=pt;}return;}
+      if(!A.placed&&dist(pt,A.item)<60){A.dragging=true;A.item=pt;drawAct();}}};
+  svg.onpointermove=function(ev){if(!A||A.done)return;var q=svgPt(ev),pt=[q.x,q.y];
+    if(A.s.type==='rub'&&A.rubbing){var d=dist(pt,A.last);if(dist(pt,A.t)<A.s.R+12){A.acc+=d;A.lastFx+=d;if(A.lastFx>14){A.lastFx=0;spawnFx(pt[0],pt[1]);var au=ac();if(au&&D.sfx&&Math.random()<0.35)tone(A.s.fx==='spark'?880:520,au.currentTime,0.04,'triangle',0.05);}}A.last=pt;drawAct();if(prog()>=1)finishAct();}
+    else if(A.s.type==='drag'&&A.dragging){A.item=pt;drawAct();}
+    else if(A.pulling){A.item=pt;if(dist(pt,A.pullFrom)>80){A.pulling=false;W.p.splinterOut=true;sfx('ok');finishAct();}else drawAct();}};
+  svg.onpointerup=svg.onpointercancel=function(){if(!A||A.done)return;A.rubbing=false;
+    if(A.s.type==='drag'&&A.dragging){A.dragging=false;
+      if(dist(A.item,A.t)<A.s.R+10){A.item=A.t.slice();A.placed=true;sfx('use');
+        if(A.s.hold)holdIt();else if(A.s.pull){A.countTxt='쭉 당겨요!';drawAct();say('이제 바깥으로 쭉 당겨요!');}else finishAct();}
+      else{A.item=[262,390];drawAct();}}};
+}
+function holdIt(){var t0=Date.now(),H=A.s.hold;
+  (function tick(){if(!A||A.done)return;var e=Date.now()-t0;A.holdP=Math.min(1,e/H);
+    if(A.s.count){var n=Math.min(3,Math.floor(e/(H/3))+1);var txt=['하나','둘','셋!'][n-1];if(txt!==A.countTxt){A.countTxt=txt;say(txt);}}
+    drawAct();if(e>=H){A.countTxt=null;finishAct();}else requestAnimationFrame(tick);})();}
+function finishAct(){if(!A||A.done)return;A.done=true;sfx('ok');var cb=A.onDone,s=A.s;drawAct();setTimeout(function(){var g=document.getElementById('actg');if(g)g.innerHTML='';A=null;cb(s);},450);}
 
 // ---------- 화면 ----------
 var app=document.getElementById('app'),screen='home',W=null;
 function go(s){screen=s;if(s!=='ward')musicStop();var hb=document.getElementById('hubbtn');if(hb)hb.style.display=s==='ward'||s==='choose'?'none':'';({home:rHome,ward:rWard,choose:rChoose})[s]();}
 function rHome(){
   var kinds=Object.keys(D.kinds).length;
-  var h='<h1>🏥 동물 병원</h1><div class="sub">아픈 동물 친구들이 기다리고 있어요.<br>진찰하고 치료해 주세요, 의사 선생님!</div>';
-  h+='<div class="row r2" style="margin-top:16px"><div class="opt"><span class="big">🩺</span>치료한 환자<small style="font-size:22px;color:var(--ink)">'+D.healed+'명</small></div><div class="opt"><span class="big">📋</span>고친 병 종류<small style="font-size:22px;color:var(--ink)">'+kinds+' / '+SICK.length+'</small></div></div>';
+  var h='<h1>🏥 동물 병원</h1><div class="sub">아픈 동물 친구들이 기다리고 있어요.<br>손가락으로 진찰하고 치료해 주세요, 의사 선생님!</div>';
+  h+='<div style="display:flex;justify-content:center;gap:4px;margin:6px 0">'+shuffle(ANIMALS).slice(0,5).map(function(a){return animalThumb(a,80);}).join('')+'</div>';
+  h+='<div class="row r2"><div class="opt"><span class="big">🩺</span>치료한 환자<small style="font-size:22px;color:var(--ink)">'+D.healed+'명</small></div><div class="opt"><span class="big">📋</span>고친 병 종류<small style="font-size:22px;color:var(--ink)">'+kinds+' / '+SICK.length+'</small></div></div>';
   h+='<h2>누구랑 할까요?</h2><div class="row r2"><button class="opt'+(D.players===1?' sel':'')+'" onclick="App.set(\'players\',1)"><span class="big">👩‍⚕️</span>혼자 의사 하기<small>환자가 차례로 와요</small></button>'+
     '<button class="opt'+(D.players===2?' sel':'')+'" onclick="App.set(\'players\',2)"><span class="big">🧑‍⚕️🤒</span>의사·환자 나눠 하기<small>환자 친구가 아픈 곳을 골라요</small></button></div>';
   h+='<div class="row r3" style="margin-top:12px"><button class="opt'+(D.voice?' sel':'')+'" onclick="App.set(\'voice\',!D.voice)"><span class="big">🗣️</span>읽어주기 '+(D.voice?'켬':'끔')+'</button><button class="opt'+(D.music?' sel':'')+'" onclick="App.set(\'music\',!D.music)"><span class="big">🎵</span>음악 '+(D.music?'켬':'끔')+'</button><button class="opt'+(D.sfx?' sel':'')+'" onclick="App.set(\'sfx\',!D.sfx)"><span class="big">🔊</span>효과음 '+(D.sfx?'켬':'끔')+'</button></div>';
   h+='<button class="btn" onclick="App.open()">병원 문 열기! ▶</button>';
   app.innerHTML=h;
 }
-// 하루 진료: 환자 5명
-function openClinic(){
-  var an=shuffle(ANIMALS),sk=shuffle(SICK);
-  W={queue:[],idx:0,healed:[]};
-  for(var i=0;i<5;i++)W.queue.push({animal:an[i],sick:sk[i]});
-  next();
-}
+function openClinic(){var an=shuffle(ANIMALS),sk=shuffle(SICK);W={queue:[],idx:0,healed:[]};for(var i=0;i<5;i++)W.queue.push({animal:an[i],sick:sk[i]});next();}
+function newPatient(a,s){return {animal:a,sick:s,calm:false,found:false,step:0,marks:[],done:false,wrong:0,phase:'pet'};}
 function next(){
   if(W.idx>=W.queue.length){finishDay();return;}
-  var q=W.queue[W.idx];
-  W.p={animal:q.animal,sick:q.sick,found:false,step:0,marks:[],done:false,wrong:0,phase:'diag'};
+  var q=W.queue[W.idx];W.p=newPatient(q.animal,q.sick);
   if(D.players===2){W.p.phase='pick';go('choose');return;}
-  go('ward');setTimeout(function(){say(q.animal[1]+': '+q.sick.say);},300);
+  arrive();
 }
+function arrive(){go('ward');setTimeout(function(){say(W.p.animal.n+': '+W.p.sick.say);setTimeout(function(){if(W.p.phase==='pet')startAct(ACTS.pet,afterPet);},300);},250);}
+function afterPet(s){var p=W.p;p.calm=true;p.phase='diag';p.msg=s.after+' 이제 진찰해 볼까요?';refresh();}
 function rChoose(){
   var p=W.p,h='<div class="hud"><button class="pill" onclick="App.go(\'home\')">◀</button><span class="pill">🤒 환자 차례</span></div>';
-  h+='<h2>환자 친구! 어떤 동물이 될래요?</h2><div class="row r4" style="grid-template-columns:repeat(7,1fr)">';
-  ANIMALS.forEach(function(a,i){h+='<button class="opt'+(p.animal===a?' sel':'')+'" style="padding:6px" onclick="App.pa('+i+')"><span class="big em" style="font-size:40px">'+a[0]+'</span></button>';});
+  h+='<h2>환자 친구! 어떤 동물이 될래요?</h2><div class="row" style="grid-template-columns:repeat(auto-fill,minmax(84px,1fr))">';
+  ANIMALS.forEach(function(a,i){h+='<button class="opt'+(p.animal===a?' sel':'')+'" style="padding:2px" onclick="App.pa('+i+')">'+animalThumb(a,64)+'<small>'+a.n+'</small></button>';});
   h+='</div><h2>어디가 아픈지 골라요</h2><div class="row r4">';
-  SICK.forEach(function(s,i){var sp=s.spot;h+='<button class="opt'+(p.sick===s?' sel':'')+'" onclick="App.ps('+i+')" style="font-size:20px"><span class="big" style="font-size:34px">'+({forehead:'🤒',chest:'😷',mouth:'🦷',knee:'🦵',leg:'🦵',foot:'🦶',arm:'💪',tummy:'🤢',head:'🤕',eye:'👁️',ear:'👂'}[sp])+'</span>'+s.name+'</button>';});
+  SICK.forEach(function(s,i){h+='<button class="opt'+(p.sick===s?' sel':'')+'" onclick="App.ps('+i+')" style="font-size:20px"><span class="big em" style="font-size:34px">'+({forehead:'🤒',chest:'😷',mouth:'🦷',knee:'🦵',leg:'🦵',foot:'🦶',arm:'💪',tummy:'🤢',head:'🤕',eye:'👁️',ear:'👂'}[s.spot])+'</span>'+s.name+'</button>';});
   h+='</div><button class="btn" onclick="App.toDoc()">다 골랐어요! 의사 선생님께 태블릿을 줘요 ▶</button>';
   app.innerHTML=h;
 }
 function rWard(){
-  var p=W.p,h='<div class="hud"><button class="pill" onclick="App.go(\'home\')">◀</button><span class="pill">환자 '+(W.idx+1)+' / '+W.queue.length+'</span><span class="pill em">'+p.animal[0]+' '+p.animal[1]+'</span><span class="grow"></span><button class="pill" onclick="App.repeat()">🗣️ 다시 듣기</button></div>';
+  var p=W.p,h='<div class="hud"><button class="pill" onclick="App.go(\'home\')">◀</button><span class="pill">환자 '+(W.idx+1)+' / '+W.queue.length+'</span><span class="pill">'+p.animal.n+'</span><span class="grow"></span><button class="pill" onclick="App.repeat()">🗣️ 다시 듣기</button></div>';
   h+='<div class="ward"><div class="left" id="left"><div class="bubble" id="bub">'+bubbleText()+'</div>'+patientSvg(p)+'</div><div class="right" id="right">'+panel()+'</div></div>';
   app.innerHTML=h;musicStart();
 }
-function bubbleText(){var p=W.p;if(p.done)return '고마워요, 의사 선생님! 이제 하나도 안 아파요! 😊';if(p.phase==='treat'&&p.sick.id==='vaccine')return '용기 내 볼게요! 💪';return p.sick.say;}
+function bubbleText(){var p=W.p;if(p.done)return '고마워요, 의사 선생님! 이제 하나도 안 아파요!';if(!p.calm)return p.sick.say+' 엉엉…';if(p.sick.id==='vaccine'&&p.phase!=='diag')return '용기 내 볼게요! 💪';return p.sick.say;}
+function stepDots(){var p=W.p,d='';p.sick.steps.forEach(function(_,i){d+='<span class="'+(i<p.step?'on':'')+'"></span>';});return '<div class="steps">'+d+'</div>';}
 function panel(){
   var p=W.p,h='';
-  if(p.phase==='diag'){
+  if(p.phase==='act'||p.phase==='pet'){
+    h+='<div class="stage">'+(p.calm?(p.found?'2단계 · 치료하기':'1단계 · 진찰하기'):'먼저 달래 주기')+'</div>'+(p.found?'<div class="card" style="background:#f1fbf9"><div class="result">🔎 '+p.sick.found+'</div></div>':'')+
+      '<div class="card act"><div class="hand em">👆</div><div class="result" style="font-size:26px">'+(p.actText||'')+'</div><div class="pbar"><div id="pbar"></div></div></div>';
+  }else if(p.phase==='diag'){
     h+='<div class="stage">1단계 · 진찰하기</div><div class="card"><h3>어떤 도구로 살펴볼까요?</h3><div class="tools">';
     Object.keys(DIAG).forEach(function(k){var d=DIAG[k];h+='<button class="tool'+(p.tried&&p.tried[k]?' no':'')+(p.wrong>=2&&k===p.sick.diag?' hint':'')+'" onclick="App.diag(\''+k+'\')"><span class="ic">'+icon(d.ic,48)+'</span>'+d.n+'</button>';});
     h+='</div></div><div class="result" id="res">'+(p.msg||'아픈 곳(빨간 동그라미)을 잘 보고 도구를 골라요.')+'</div>';
   }else if(p.phase==='treat'){
-    var dots='';p.sick.steps.forEach(function(_,i){dots+='<span class="'+(i<p.step?'on':'')+'"></span>';});
-    h+='<div class="stage">2단계 · 치료하기</div><div class="card" style="background:#f1fbf9"><div class="result">🔎 '+p.sick.found+'</div></div><div class="card"><div class="steps">'+dots+'</div><h3>'+(p.step===0?'어떻게 치료할까요?':'다음엔 뭘 할까요?')+'</h3><div class="tools">';
+    h+='<div class="stage">2단계 · 치료하기</div><div class="card" style="background:#f1fbf9"><div class="result">🔎 '+p.sick.found+'</div></div><div class="card">'+stepDots()+'<h3>'+(p.step===0?'어떻게 치료할까요?':'다음엔 뭘 할까요?')+'</h3><div class="tools">';
     Object.keys(TREAT).forEach(function(k){var t=TREAT[k],need=p.sick.steps[p.step][0];h+='<button class="tool'+(p.tried&&p.tried[k]?' no':'')+(p.wrong>=2&&k===need?' hint':'')+'" onclick="App.treat(\''+k+'\')"><span class="ic">'+icon(t.ic,48)+'</span>'+t.n+'</button>';});
     h+='</div></div><div class="result" id="res">'+(p.msg||'')+'</div>';
-  }else{
+  }else if(p.phase==='done'){
     h+='<div class="stage">3단계 · 다 나았어요!</div><div class="tip">💡 <b>건강 상식</b><br>'+p.sick.tip+'</div>'+
-      (p.sick.id==='vaccine'||p.sick.id==='tooth'||p.sick.id==='bone'?'<div class="tip" style="background:#eef7ff">🏅 <b>용기 배지</b><br>'+p.animal[1]+(hasB(p.animal[1])?'이는':'는')+' 무서웠지만 끝까지 잘 참았어요!</div>':'')+
+      (p.sick.id==='vaccine'||p.sick.id==='tooth'||p.sick.id==='bone'?'<div class="tip" style="background:#eef7ff">🏅 <b>용기 배지</b><br>'+p.animal.n+(hasB(p.animal.n)?'이는':'는')+' 무서웠지만 끝까지 잘 참았어요!</div>':'')+
       '<button class="btn" onclick="App.next()">'+(W.idx+1<W.queue.length?'다음 환자 부르기 ▶':'오늘 진료 끝! ▶')+'</button>';
   }
   return h;
 }
-function refresh(){var l=document.getElementById('left'),r=document.getElementById('right');if(!l)return;l.innerHTML='<div class="bubble" id="bub">'+bubbleText()+'</div>'+patientSvg(W.p);r.innerHTML=panel();}
-function fx(ic){var l=document.getElementById('left'),svg=document.getElementById('pt');if(!l||!svg)return;var s=SPOT[W.p.sick.spot],r=svg.getBoundingClientRect(),lr=l.getBoundingClientRect(),k=r.height/430;
-  var e=document.createElement('div');e.className='fx';e.innerHTML=icon(ic,80);e.style.left=(r.left-lr.left+(r.width-300*k)/2+s[0]*k)+'px';e.style.top=(r.top-lr.top+s[1]*k)+'px';l.appendChild(e);setTimeout(function(){e.remove();},1100);}
+function refresh(){var l=document.getElementById('left'),r=document.getElementById('right');if(!l)return;l.innerHTML='<div class="bubble" id="bub">'+bubbleText()+'</div>'+patientSvg(W.p);r.innerHTML=panel();if(A){drawAct();bindAct();}}
 function diag(k){
-  var p=W.p;if(p.phase!=='diag'||p.busy)return;p.tried=p.tried||{};
-  if(k===p.sick.diag){sfx('ok');fx(DIAG[k].ic);p.busy=true;p.msg=DIAG[k].use;refresh();say(DIAG[k].use);
-    setTimeout(function(){p.busy=false;p.found=true;p.phase='treat';p.tried={};p.wrong=0;p.msg='';refresh();say(p.sick.found+' 어떻게 치료할까요?');},2200);}
+  var p=W.p;if(p.phase!=='diag')return;p.tried=p.tried||{};
+  if(k===p.sick.diag){sfx('ok');p.wrong=0;var d=DIAG[k];
+    startAct({type:'drag',ic:d.ic,R:55,hold:1300,text:d.use+' 도구를 끌어다 빨간 곳에 대 주세요.'},function(){p.found=true;p.phase='treat';p.tried={};p.wrong=0;p.msg='';refresh();say(p.sick.found+' 어떻게 치료할까요?');});}
   else{sfx('no');p.tried[k]=1;p.wrong++;p.msg=ro(DIAG[k].n)+' 봤는데 이상한 곳이 없어요. 다른 도구를 써 볼까요?';refresh();say('여기는 괜찮아요. 다른 도구를 써 볼까요?');}
 }
 function treat(k){
-  var p=W.p;if(p.phase!=='treat'||p.busy)return;p.tried=p.tried||{};var st=p.sick.steps[p.step];
-  if(k===st[0]){sfx('use');fx(TREAT[k].ic);p.busy=true;p.msg='✅ '+st[1];
-    if(k==='bandaid'||k==='bandage'||k==='ointment')p.marks=p.marks.filter(function(m){return !(k==='bandaid'&&m.k==='ointment');}).concat([{k:k,at:p.sick.spot}]);
-    refresh();say(st[1]);
-    setTimeout(function(){p.busy=false;p.step++;p.tried={};p.wrong=0;
-      if(p.step>=p.sick.steps.length){p.done=true;p.phase='done';p.msg='';healed();refresh();say('고마워요, 의사 선생님! '+p.sick.tip);}
-      else{p.msg='';refresh();}},k==='shot'?2600:1800);}
+  var p=W.p;if(p.phase!=='treat')return;p.tried=p.tried||{};var st=p.sick.steps[p.step];
+  if(k===st[0]){sfx('use');p.wrong=0;var spec={};for(var x in ACTS[k])spec[x]=ACTS[k][x];
+    startAct(spec,function(s){
+      if(k==='bandaid')p.marks=p.marks.filter(function(m){return m.k!=='ointment';});
+      if(k==='bandaid'||k==='bandage'||k==='ointment')p.marks.push({k:k,at:p.sick.spot});
+      if(k==='rest')p.marks.push({k:'blanket'});
+      p.step++;p.tried={};p.msg='✅ '+s.after;
+      if(p.step>=p.sick.steps.length){p.done=true;p.phase='done';p.marks=p.marks.filter(function(m){return m.k!=='blanket';});healed();refresh();say(s.after+' 고마워요, 의사 선생님! '+p.sick.tip);}
+      else{p.phase='treat';refresh();say(s.after);}
+    });}
   else{sfx('no');p.tried[k]=1;p.wrong++;p.msg='음… 지금은 '+TREAT[k].n+'보다 다른 게 필요해요.';refresh();say('지금은 다른 게 필요해요.');}
 }
-function healed(){sfx('win');confetti();D.healed++;D.kinds[W.p.sick.id]=(D.kinds[W.p.sick.id]||0)+1;save();W.healed.push(W.p.animal[0]);}
+function healed(){sfx('win');confetti();D.healed++;D.kinds[W.p.sick.id]=(D.kinds[W.p.sick.id]||0)+1;save();W.healed.push(W.p.animal);}
 function finishDay(){
   musicStop();var o=document.createElement('div');o.className='overlay';
-  o.innerHTML='<div class="panel"><div style="font-size:70px">🏥</div><div style="font-size:32px">오늘 진료 끝!</div><div class="healed em">'+W.healed.join(' ')+'</div><div style="font-size:22px;margin:8px 0;line-height:1.6">오늘 '+W.healed.length+'명을 치료했어요.<br>지금까지 모두 '+D.healed+'명! 멋진 의사 선생님이에요 👩‍⚕️</div><button class="btn" id="ag">내일 진료도 하기</button><button class="btn ghost" id="hm">처음으로</button></div>';
+  o.innerHTML='<div class="panel"><div style="font-size:30px">🏥 오늘 진료 끝!</div><div style="display:flex;justify-content:center;flex-wrap:wrap">'+W.healed.map(function(a){return '<svg viewBox="-20 -50 340 480" width="72" height="100">'+drawAnimal(a,'happy')+'</svg>';}).join('')+'</div><div style="font-size:22px;margin:8px 0;line-height:1.6">오늘 '+W.healed.length+'명을 치료했어요.<br>지금까지 모두 '+D.healed+'명! 멋진 의사 선생님이에요 👩‍⚕️</div><button class="btn" id="ag">내일 진료도 하기</button><button class="btn ghost" id="hm">처음으로</button></div>';
   document.body.appendChild(o);say('오늘 진료 끝! 멋진 의사 선생님이에요.');
   o.querySelector('#ag').onclick=function(){o.remove();openClinic();};o.querySelector('#hm').onclick=function(){o.remove();go('home');};
 }
 function confetti(){var em=['🎉','⭐','💖','✨','🩹'];for(var i=0;i<18;i++){var s=document.createElement('div');s.className='conf em';s.textContent=em[i%em.length];s.style.left=R(0,95)+'vw';
   s.style.animationDuration=(1.6+Math.random()*1.4)+'s';s.style.animationDelay=(Math.random()*0.4)+'s';document.body.appendChild(s);(function(n){setTimeout(function(){n.remove();},3600);})(s);}}
 window.App={go:go,open:openClinic,diag:diag,treat:treat,
-  next:function(){W.idx++;next();},repeat:function(){var p=W.p;say(p.phase==='diag'?p.animal[1]+': '+p.sick.say:(p.phase==='treat'?p.sick.found:p.sick.tip));},
+  next:function(){W.idx++;next();},
+  repeat:function(){var p=W.p;say(p.phase==='act'||p.phase==='pet'?p.actText:(p.phase==='diag'?p.animal.n+': '+p.sick.say:(p.phase==='treat'?p.sick.found:p.sick.tip)));},
   set:function(k,v){D[k]=v;save();rHome();},
   pa:function(i){W.p.animal=ANIMALS[i];rChoose();},ps:function(i){W.p.sick=SICK[i];rChoose();},
-  toDoc:function(){W.p.phase='diag';go('ward');setTimeout(function(){say('의사 선생님, '+W.p.animal[1]+(hasB(W.p.animal[1])?'이가':'가')+' 왔어요. '+W.p.sick.say);},300);}};
+  toDoc:function(){var p=W.p;W.p=newPatient(p.animal,p.sick);go('ward');setTimeout(function(){say('의사 선생님, '+p.animal.n+(hasB(p.animal.n)?'이가':'가')+' 왔어요. '+p.sick.say);setTimeout(function(){if(W.p.phase==='pet')startAct(ACTS.pet,afterPet);},300);},250);}};
 go('home');
 </script>
 <a href="index.html" style="position:fixed;left:10px;bottom:10px;z-index:5;background:#fff;border-radius:999px;padding:8px 16px;font-size:18px;color:#3b2f2a;text-decoration:none;box-shadow:0 3px 0 rgba(0,0,0,.1);font-family:inherit" id="hubbtn">🎈 놀이터</a>
