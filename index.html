@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <script>(function(){var S=window.screen;function g(){try{return +(JSON.parse(localStorage.getItem('kidsUI.v1')||'{}').scale)||1;}catch(e){return 1;}}var lw=-1;function fit(s){if(s==null)s=g();var m=document.querySelector('meta[name=viewport]');if(!m)return;var a=S.width,b=S.height,o=S.orientation&&S.orientation.type,w=o?(o.indexOf('landscape')===0?Math.max(a,b):Math.min(a,b)):a;lw=a;m.setAttribute('content',s===1?'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no':'width='+Math.round(w/s)+',initial-scale='+s+',minimum-scale='+s+',maximum-scale='+s+',user-scalable=no');}window.kidsFit=fit;fit();function chk(){if(S.width!==lw)fit();}window.addEventListener('orientationchange',function(){setTimeout(chk,300);});window.addEventListener('resize',chk);})();</script>
+<script>(function(){var ss=window.speechSynthesis,vs=[],ko=null,keep=[];function load(){if(!ss)return;try{vs=ss.getVoices()||[];}catch(e){vs=[];}ko=null;for(var i=0;i<vs.length;i++){var l=String(vs[i].lang||'').toLowerCase().replace('_','-');if(l.indexOf('ko')===0&&(!ko||vs[i].localService))ko=vs[i];}}if(ss){load();try{ss.addEventListener('voiceschanged',load);}catch(e){ss.onvoiceschanged=load;}}window.kidsVoiceInfo=function(){load();return {api:!!ss,n:vs.length,ko:ko?ko.name+' ('+ko.lang+')':''};};window.kidsSpeak=function(t,rate){if(!ss)return;try{var busy=ss.speaking||ss.pending;if(busy)ss.cancel();if(!ko)load();var u=new SpeechSynthesisUtterance(String(t));u.lang=ko?ko.lang:'ko-KR';if(ko)u.voice=ko;u.rate=rate||0.95;u.volume=1;keep.push(u);if(keep.length>6)keep.shift();var go=function(){try{if(ss.paused)ss.resume();ss.speak(u);}catch(e){}};if(busy)setTimeout(go,150);else go();}catch(e){}};function unlock(){document.removeEventListener('pointerdown',unlock,true);try{if(ss&&!ss.speaking&&!ss.pending){var u=new SpeechSynthesisUtterance(' ');u.volume=0;keep.push(u);ss.speak(u);}}catch(e){}}document.addEventListener('pointerdown',unlock,true);})();</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#ff9f43">
@@ -90,7 +91,7 @@ function render(){
   h+='<a class="app" href="sudoku.html" style="background:#fff3bf"><div class="em">🔢</div><div class="name">그림 스도쿠</div><div class="prog">푼 판 '+(SD.solved||0)+'개<br>⭐ '+sdS+'</div></a>';
   h+='<a class="app" href="puzzle.html" style="background:#d3f9d8"><div class="em">🧩</div><div class="name">퍼즐 놀이</div><div class="prog">완성한 그림 '+pzDone+' / 40<br>⭐ '+pzS+'</div><div class="bar"><div style="width:'+Math.round(pzDone/40*100)+'%"></div></div></a>';
   h+='<a class="app" href="robot.html" style="background:#dff3ff"><div class="em">🤖</div><div class="name">로봇 코딩</div><div class="prog">깬 판 '+rbDone+' / 38<br>⭐ '+rbS+'</div><div class="bar"><div style="width:'+Math.round(rbDone/38*100)+'%"></div></div></a>';
-  h+='</div><div class="foot"><button onclick="sizePanel()">📐 화면 크기 '+Math.round(uiScale()*100)+'%</button></div>';
+  h+='</div><div class="foot"><button onclick="sizePanel()">📐 화면 크기 '+Math.round(uiScale()*100)+'%</button> <button onclick="voicePanel()">🗣️ 소리 확인</button></div>';
   document.getElementById('app').innerHTML=h;
   if(!PF&&!render.asked){render.asked=true;editProf(true);}
 }
@@ -107,6 +108,17 @@ function sizePanel(){
     o.querySelector('#rs').onclick=function(){setS(1);};
     o.querySelector('#ok').onclick=function(){o.remove();render();};}
   draw();document.body.appendChild(o);
+}
+function voicePanel(){
+  var o=document.createElement('div');o.className='overlay';document.body.appendChild(o);
+  function draw(){var I=window.kidsVoiceInfo?kidsVoiceInfo():{api:false,n:0,ko:''},st;
+    if(!I.api)st='<div style="color:#e03131">이 브라우저는 읽어주기를 지원하지 않아요.</div>';
+    else if(I.ko)st='<div style="color:#2b8a3e">✅ 한국어 음성이 있어요<br><small>'+I.ko+'</small></div><div style="font-size:16px;color:#8a7a70;margin-top:6px">그래도 안 들리면 태블릿 <b>미디어 볼륨</b>을 올려 보세요.</div>';
+    else st='<div style="color:#e03131">⚠️ 한국어 음성을 찾지 못했어요 (음성 '+I.n+'개)</div><div style="font-size:16px;text-align:left;margin-top:8px;line-height:1.6">태블릿 <b>설정 → 일반 → 언어 및 입력 방식 → 텍스트 음성 변환(TTS)</b>에서<br>① 기본 엔진을 <b>삼성 TTS</b>나 <b>Google 음성 서비스</b>로 고르고<br>② 언어를 <b>한국어</b>로 정한 뒤 음성 데이터를 내려받아요.<br>그다음 놀이터 앱을 껐다 켜 주세요.</div>';
+    o.innerHTML='<div class="panel"><div style="font-size:56px">🗣️</div><div style="font-size:26px">읽어주기 소리 확인</div><div style="font-size:20px;margin:10px 0">'+st+'</div><button id="tt">🔊 들어 보기</button><button id="ok" class="cx">닫기</button></div>';
+    o.querySelector('#tt').onclick=function(){if(window.kidsSpeak)kidsSpeak('안녕하세요! 읽어주기 소리가 잘 들리나요?',0.95);setTimeout(draw,800);};
+    o.querySelector('#ok').onclick=function(){o.remove();};}
+  draw();setTimeout(draw,700);
 }
 function pickProf(id){var H=hub();H.cur=id;put('kidsHub.v1',H);render();}
 function editProf(isNew){

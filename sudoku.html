@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <script>(function(){var S=window.screen;function g(){try{return +(JSON.parse(localStorage.getItem('kidsUI.v1')||'{}').scale)||1;}catch(e){return 1;}}var lw=-1;function fit(s){if(s==null)s=g();var m=document.querySelector('meta[name=viewport]');if(!m)return;var a=S.width,b=S.height,o=S.orientation&&S.orientation.type,w=o?(o.indexOf('landscape')===0?Math.max(a,b):Math.min(a,b)):a;lw=a;m.setAttribute('content',s===1?'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no':'width='+Math.round(w/s)+',initial-scale='+s+',minimum-scale='+s+',maximum-scale='+s+',user-scalable=no');}window.kidsFit=fit;fit();function chk(){if(S.width!==lw)fit();}window.addEventListener('orientationchange',function(){setTimeout(chk,300);});window.addEventListener('resize',chk);})();</script>
+<script>(function(){var ss=window.speechSynthesis,vs=[],ko=null,keep=[];function load(){if(!ss)return;try{vs=ss.getVoices()||[];}catch(e){vs=[];}ko=null;for(var i=0;i<vs.length;i++){var l=String(vs[i].lang||'').toLowerCase().replace('_','-');if(l.indexOf('ko')===0&&(!ko||vs[i].localService))ko=vs[i];}}if(ss){load();try{ss.addEventListener('voiceschanged',load);}catch(e){ss.onvoiceschanged=load;}}window.kidsVoiceInfo=function(){load();return {api:!!ss,n:vs.length,ko:ko?ko.name+' ('+ko.lang+')':''};};window.kidsSpeak=function(t,rate){if(!ss)return;try{var busy=ss.speaking||ss.pending;if(busy)ss.cancel();if(!ko)load();var u=new SpeechSynthesisUtterance(String(t));u.lang=ko?ko.lang:'ko-KR';if(ko)u.voice=ko;u.rate=rate||0.95;u.volume=1;keep.push(u);if(keep.length>6)keep.shift();var go=function(){try{if(ss.paused)ss.resume();ss.speak(u);}catch(e){}};if(busy)setTimeout(go,150);else go();}catch(e){}};function unlock(){document.removeEventListener('pointerdown',unlock,true);try{if(ss&&!ss.speaking&&!ss.pending){var u=new SpeechSynthesisUtterance(' ');u.volume=0;keep.push(u);ss.speak(u);}}catch(e){}}document.addEventListener('pointerdown',unlock,true);})();</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#fab005">
 <title>그림 스도쿠</title>
@@ -119,7 +120,7 @@ function sfx(k){if(!D.sfx)return;var a=ac();if(!a)return;var t=a.currentTime;
   else if(k==='ok'){tone(784,t,0.1,'sine',0.14);tone(1175,t+0.08,0.16,'sine',0.12);}
   else if(k==='no')tone(260,t,0.18,'triangle',0.1);
   else if(k==='win')[523,659,784,1047,1319].forEach(function(f,i){tone(f,t+i*0.1,0.22,'square',0.05);tone(f,t+i*0.1,0.22,'sine',0.1);});}
-function say(t){if(!D.voice||!window.speechSynthesis)return;try{speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang='ko-KR';u.rate=0.95;speechSynthesis.speak(u);}catch(e){}}
+function say(t){if(!D.voice||!window.speechSynthesis)return;try{kidsSpeak(t,0.95);}catch(e){}}
 function hasB(w){var c=w.charCodeAt(w.length-1);if(c<0xAC00||c>0xD7A3)return false;return (c-0xAC00)%28!==0;}
 function ga(w){return w+(hasB(w)?'이':'가');}
 
