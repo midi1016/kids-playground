@@ -41,8 +41,8 @@ h3{font-weight:normal;font-size:24px;margin:14px 0 8px}
 .pc img{width:100%;border-radius:12px;display:block;aspect-ratio:4/3}
 .pc span{margin-top:4px}.pc small{color:#f0a500;font-size:15px;min-height:16px}
 .pc.sel{border-color:var(--main)}
-.szs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-@media (max-width:700px){.szs{grid-template-columns:repeat(3,1fr)}}
+.szs{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+@media (max-width:700px){.szs{grid-template-columns:repeat(4,1fr)}}
 .sz{background:#fff;border-radius:18px;padding:8px 2px;box-shadow:0 4px 0 var(--line);border:4px solid transparent;font-size:17px;display:flex;flex-direction:column;align-items:center}
 .sz b{font-weight:normal;font-size:34px;line-height:1.1}.sz small{color:#f0a500;font-size:15px;min-height:16px}
 .sz.sel{border-color:var(--main);background:#f3fffb}
@@ -363,10 +363,10 @@ var D={best:{},slide:{},pic:0,size:0,ghost:true,nums:true,smode:'pic',ssize:'33'
 try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);for(var k in o)D[k]=o[k];}}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
 var NAME='',GRADE='K';try{var HB=JSON.parse(localStorage.getItem('kidsHub.v1')||'null');if(HB&&HB.profiles){var PF=HB.profiles.filter(function(x){return x.id===HB.cur;})[0]||HB.profiles[0];if(PF){NAME=PF.name;GRADE=PF.grade||'K';}}}catch(e){}
-var SIZES=[4,6,9,12,16,25],GRID={4:[2,2],6:[3,2],9:[3,3],12:[4,3],16:[4,4],25:[5,5]};
+var SIZES=[4,6,9,12,16,25,36,49],GRID={4:[2,2],6:[3,2],9:[3,3],12:[4,3],16:[4,4],25:[5,5],36:[6,6],49:[7,7]};
 if(D.theme==null)D.theme=PICS[D.pic]?PICS[D.pic].t:0;
 if(!D.size)D.size={K:6,'1':9,'2':12,'3':16}[GRADE]||6;
-var SGRID={'32':[3,2],'33':[3,3],'44':[4,4]},SSTAR={'32':[20,40],'33':[60,120],'44':[150,300]},SMIX={'32':16,'33':34,'44':80};
+var SGRID={'32':[3,2],'33':[3,3],'44':[4,4],'55':[5,5]},SSTAR={'32':[20,40],'33':[60,120],'44':[150,300],'55':[320,600]},SMIX={'32':16,'33':34,'44':80,'55':150};
 
 // ---------- 소리·읽어주기 ----------
 var actx=null;
@@ -400,8 +400,8 @@ function rHome(){
     h+='</div><div class="box" style="margin-top:14px;font-size:19px">조각 7개로 그림자 모양을 채워요. 조각을 <b>톡</b> 누르면 돌아가고, 끌어서 옮겨요.</div><div class="tg"><button class="'+(D.tanEasy!==false?'on':'')+'" onclick="App.teasy()">✏️ 도움선 '+(D.tanEasy!==false?'켬':'끔')+'</button>';
   }else{
     h+='<h3>무엇을 맞출까요?</h3><div class="szs" style="grid-template-columns:1fr 1fr"><button class="sz'+(D.smode==='pic'?' sel':'')+'" onclick="App.smode(\'pic\')"><b class="em">🖼️</b>그림 맞추기</button><button class="sz'+(D.smode==='num'?' sel':'')+'" onclick="App.smode(\'num\')"><b>123</b>숫자 차례대로</button></div>';
-    h+='<h3>크기</h3><div class="szs" style="grid-template-columns:repeat(3,1fr)">';
-    [['32','3×2','쉬워요'],['33','3×3','보통'],['44','4×4','어려워요']].forEach(function(z){var r=D.slide[D.smode+z[0]];h+='<button class="sz'+(D.ssize===z[0]?' sel':'')+'" onclick="App.ssize(\''+z[0]+'\')"><b>'+z[1]+'</b>'+z[2]+'<small>'+(r?stars(r.s)+' '+r.m+'번':'')+'</small></button>';});
+    h+='<h3>크기</h3><div class="szs" style="grid-template-columns:repeat(4,1fr)">';
+    [['32','3×2','쉬워요'],['33','3×3','보통'],['44','4×4','어려워요'],['55','5×5','고수']].forEach(function(z){var r=D.slide[D.smode+z[0]];h+='<button class="sz'+(D.ssize===z[0]?' sel':'')+'" onclick="App.ssize(\''+z[0]+'\')"><b>'+z[1]+'</b>'+z[2]+'<small>'+(r?stars(r.s)+' '+r.m+'번':'')+'</small></button>';});
     h+='</div><div class="box" style="margin-top:14px;font-size:19px">빈칸 옆 조각을 누르면 빈칸으로 쏙! 적게 움직일수록 별이 많아요.</div><div class="tg">';
   }
   h+='<button class="'+(D.voice?'on':'')+'" onclick="App.set(\'voice\')">🗣️ 읽어주기 '+(D.voice?'켬':'끔')+'</button><button class="'+(D.sfx?'on':'')+'" onclick="App.set(\'sfx\')">🔊 효과음 '+(D.sfx?'켬':'끔')+'</button></div>';

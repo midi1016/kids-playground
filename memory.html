@@ -23,7 +23,7 @@ h1{font-weight:normal;font-size:44px;text-align:center;margin:10px 0 2px}
 h2{font-weight:normal;font-size:26px;text-align:center;margin:18px 0 10px}
 .sub{text-align:center;color:var(--sub);font-size:19px}
 .row{display:grid;gap:12px}
-.r4{grid-template-columns:repeat(4,1fr)}.r2{grid-template-columns:repeat(2,1fr)}
+.r4{grid-template-columns:repeat(4,1fr)}.r3{grid-template-columns:repeat(3,1fr)}.r2{grid-template-columns:repeat(2,1fr)}
 @media (max-width:600px){.r4{grid-template-columns:repeat(2,1fr)}}
 .opt{background:#fff;border-radius:22px;padding:14px 6px;font-size:24px;box-shadow:0 5px 0 var(--line);border:4px solid transparent;text-align:center}
 .opt .em{display:block;font-size:46px;line-height:1.2}
@@ -76,7 +76,9 @@ var LEVELS=[
   {key:'easy',name:'쉬움',em:'🌱',pairs:3,cols:3,peek:2500},
   {key:'normal',name:'보통',em:'🌼',pairs:8,cols:4,peek:2000},
   {key:'hard',name:'어려움',em:'🔥',pairs:12,cols:6,peek:0},
-  {key:'master',name:'도전',em:'👑',pairs:24,cols:8,peek:0}
+  {key:'hard2',name:'어려움+',em:'🌋',pairs:18,cols:6,peek:0},
+  {key:'master',name:'도전',em:'👑',pairs:24,cols:8,peek:0},
+  {key:'pro',name:'고수',em:'🏆',pairs:30,cols:10,peek:0}
 ];
 var KEY='kidsMemory.v1';
 var D={theme:'animal',level:'easy',players:1,best:{},music:true,sfx:true};
@@ -110,7 +112,7 @@ function go(s){screen=s;if(s!=='game')musicStop();var hb=document.getElementById
 function rHome(){
   var h='<h1>🃏 짝 맞추기</h1><div class="sub">같은 그림 두 장을 찾아요!</div><h2>어떤 그림으로 할까요?</h2><div class="row r4">';
   for(var k in THEMES){var t=THEMES[k];h+='<button class="opt'+(D.theme===k?' sel':'')+'" onclick="App.set(\'theme\',\''+k+'\')"><span class="em">'+t.icon+'</span>'+t.name+'</button>';}
-  h+='</div><h2>난이도</h2><div class="row r4">';
+  h+='</div><h2>난이도</h2><div class="row r3">';
   LEVELS.forEach(function(L){var b=D.best[L.key];h+='<button class="opt'+(D.level===L.key?' sel':'')+'" onclick="App.set(\'level\',\''+L.key+'\')"><span class="em">'+L.em+'</span>'+L.name+'<small>'+L.pairs+'쌍 ('+(L.pairs*2)+'장)</small><small class="st">'+(b?stars(b.s):'')+'</small></button>';});
   h+='</div><h2>누구랑 할까요?</h2><div class="row r2"><button class="opt'+(D.players===1?' sel':'')+'" onclick="App.set(\'players\',1)"><span class="em">🙋</span>혼자 하기</button><button class="opt'+(D.players===2?' sel':'')+'" onclick="App.set(\'players\',2)"><span class="em">👫</span>둘이서 하기<small>번갈아 뒤집어요</small></button></div>';
   h+='<button class="btn" onclick="App.start()">시작! ▶</button>';
