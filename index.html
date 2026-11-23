@@ -97,7 +97,7 @@ function render(){
   h+='<a class="app" href="hospital.html" style="background:#d9f2ee"><div class="em">🏥</div><div class="name">동물 병원</div><div class="prog">치료한 환자 '+(HP.healed||0)+'명<br>고친 병 '+Object.keys(HP.kinds||{}).length+' / 12</div><div class="bar"><div style="width:'+Math.round(Object.keys(HP.kinds||{}).length/12*100)+'%"></div></div></a>';
   h+='<a class="app" href="clock.html" style="background:#e3e9ff"><div class="em">🕐</div><div class="name">시계 놀이</div><div class="prog">열린 단계 '+(CK.unlocked||1)+' / 5<br>⭐ '+ckS+'</div><div class="bar"><div style="width:'+Math.round((CK.unlocked||1)/5*100)+'%"></div></div></a>';
   var CL=get('kidsColor.v1')||{},clN=(CL.gallery||[]).length;
-  h+='<a class="app" href="coloring.html" style="background:#ffe3ee"><div class="em">🎨</div><div class="name">색칠 놀이</div><div class="prog">내 작품 '+clN+'개<br>🖍️ 그림 20가지</div></a>';
+  h+='<a class="app" href="coloring.html" style="background:#ffe3ee"><div class="em">🎨</div><div class="name">색칠 놀이</div><div class="prog">내 작품 '+clN+'개<br>🖍️ 그림 30가지</div></a>';
   var SD=get('kidsSudoku.v1')||{},sdS=0;if(SD.best)for(var sk in SD.best)sdS+=SD.best[sk]||0;
   var HG=get('kidsHangul.v1')||{},hgT=Object.keys(HG.trace||{}).length,hgS=0;if(HG.best)for(var hk in HG.best)hgS+=HG.best[hk]||0;
   h+='<a class="app" href="hangul.html" style="background:#e5dbff"><div class="em"><span style="font-family:Jua,sans-serif;font-size:.85em;display:inline-flex;align-items:center;justify-content:center;background:#7950f2;color:#fff;border-radius:22%;width:1.1em;height:1.1em;line-height:1">가</span></div><div class="name">한글 놀이</div><div class="prog">따라 쓴 글자 '+hgT+' / 24<br>⭐ '+hgS+'</div><div class="bar"><div style="width:'+Math.round(hgT/24*100)+'%"></div></div></a>';
