@@ -85,7 +85,8 @@ function render(){
   var PZ=get('kidsPuzzle.v1')||{},pzS=0,pzPics={};if(PZ.best)for(var pz in PZ.best){pzS+=PZ.best[pz]||0;pzPics[pz.split('_')[0]]=1;}if(PZ.slide)for(var sl in PZ.slide)pzS+=(PZ.slide[sl]&&PZ.slide[sl].s)||0;var pzDone=Object.keys(pzPics).length;
   var SD0=get('kidsSudoku.v1')||{},sdT=0;if(SD0.best)for(var sk0 in SD0.best)sdT+=SD0.best[sk0]||0;
   var HG0=get('kidsHangul.v1')||{},hgT0=0;if(HG0.best)for(var hk0 in HG0.best)hgT0+=HG0.best[hk0]||0;
-  var total=mStars+zStars+hStars+qStars+ckS+rbS+pzS+sdT+hgT0;
+  var PN0=get('kidsPiano.v1')||{},pnT=0;if(PN0.best)for(var pk0 in PN0.best)pnT+=PN0.best[pk0]||0;
+  var total=mStars+zStars+hStars+qStars+ckS+rbS+pzS+sdT+hgT0+pnT;
   var who=name?esc(name)+(hasB(name)?'이의':'의'):'우리 아이';
   var h='<h1>🎈 '+who+' 놀이터</h1><div class="sub">오늘은 무엇을 하고 놀까요?</div>';
   if(HB.profiles.length){h+='<div class="profs">';HB.profiles.forEach(function(x,i){h+='<button class="prof'+(PF&&x.id===PF.id?' on':'')+'" onclick="pickProf(\''+x.id+'\')"><span class="pe">'+FACE[i%FACE.length]+'</span> '+esc(x.name)+'<small>'+GRN[x.grade]+'</small></button>';});h+='<button class="prof add" onclick="editProf()">✏️ 이름·학년 바꾸기</button></div>';}
@@ -100,6 +101,8 @@ function render(){
   h+='<a class="app" href="coloring.html" style="background:#ffe3ee"><div class="em">🎨</div><div class="name">색칠 놀이</div><div class="prog">내 작품 '+clN+'개<br>🖍️ 그림 30가지</div></a>';
   var SD=get('kidsSudoku.v1')||{},sdS=0;if(SD.best)for(var sk in SD.best)sdS+=SD.best[sk]||0;
   var HG=get('kidsHangul.v1')||{},hgT=Object.keys(HG.trace||{}).length,hgS=0;if(HG.best)for(var hk in HG.best)hgS+=HG.best[hk]||0;
+  var PN=get('kidsPiano.v1')||{},pnS=0,pnN=0;if(PN.best)for(var pk in PN.best){pnS+=PN.best[pk]||0;pnN++;}
+  h+='<a class="app" href="piano.html" style="background:#d0ebff"><div class="em">🎹</div><div class="name">건반 놀이</div><div class="prog">친 노래 '+pnN+' / 8<br>⭐ '+pnS+'</div><div class="bar"><div style="width:'+Math.round(pnN/8*100)+'%"></div></div></a>';
   h+='<a class="app" href="hangul.html" style="background:#e5dbff"><div class="em"><span style="font-family:Jua,sans-serif;font-size:.85em;display:inline-flex;align-items:center;justify-content:center;background:#7950f2;color:#fff;border-radius:22%;width:1.1em;height:1.1em;line-height:1">가</span></div><div class="name">한글 놀이</div><div class="prog">따라 쓴 글자 '+hgT+' / 24<br>⭐ '+hgS+'</div><div class="bar"><div style="width:'+Math.round(hgT/24*100)+'%"></div></div></a>';
   h+='<a class="app" href="sudoku.html" style="background:#fff3bf"><div class="em">🔢</div><div class="name">그림 스도쿠</div><div class="prog">푼 판 '+(SD.solved||0)+'개<br>⭐ '+sdS+'</div></a>';
   h+='<a class="app" href="puzzle.html" style="background:#d3f9d8"><div class="em">🧩</div><div class="name">퍼즐 놀이</div><div class="prog">완성한 그림 '+pzDone+' / 40<br>⭐ '+pzS+'</div><div class="bar"><div style="width:'+Math.round(pzDone/40*100)+'%"></div></div></a>';
