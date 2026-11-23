@@ -179,14 +179,14 @@ function cardSay(){var I=info(G.card);if(isVow(G.card))say(I[1]+'. '+I[4]+'의 '
 function cardStep(d){var i=ALL.map(function(a){return a[0];}).indexOf(G.card);i=(i+d+ALL.length)%ALL.length;rCard(ALL[i][0]);}
 
 // ----- 문제 묶음 공통 (8문제) -----
-function startRound(kind){G={kind:kind,n:0,total:8,miss:0,qmiss:0,lock:false,used:{}};nextQ();}
+function startRound(kind,listen){G={kind:kind,listen:!!listen,n:0,total:8,miss:0,qmiss:0,lock:false,used:{}};nextQ();}
 function nextQ(){G.qmiss=0;G.lock=false;if(G.n>=G.total){roundEnd();return;}G.n++;({sound:qSound,make:qMake,word:qWord,dict:qDict})[G.kind]();}
 function prog(){return '<span class="pill">'+G.n+' / '+G.total+'</span>';}
 function wrong(){G.miss++;G.qmiss++;sfx('no');}
 function good(next,delay){try{kidsGate.add(1);}catch(e){}G.lock=true;sfx('ok');setTimeout(function(){if(G&&G.kind)nextQ();},delay||1300);}
-function roundEnd(){var s=G.miss===0?3:(G.miss<=3?2:1),k=G.kind;if(!D.best[k]||s>D.best[k])D.best[k]=s;D.rounds++;save();sfx('win');confetti();say('다 했어요! 정말 잘했어요!');
+function roundEnd(){var s=G.miss===0?3:(G.miss<=3?2:1),k=G.kind,lis=G.listen,bk=k==='make'&&lis?'makeL':k;if(!D.best[bk]||s>D.best[bk])D.best[bk]=s;D.rounds++;save();sfx('win');confetti();say('다 했어요! 정말 잘했어요!');
   var o=document.createElement('div');o.className='overlay';o.innerHTML='<div class="panel"><div style="font-size:70px" class="em">🏅</div><div style="font-size:30px">다 했어요!</div><div class="rate">'+stars(s)+'</div><div style="font-size:19px;color:#7a6fa3">'+(s<3?'틀린 횟수 '+G.miss+'번':'한 번도 안 틀렸어요!')+'</div><button class="btn" id="ag">한 번 더 ▶</button><button class="btn ghost" id="hm">처음으로</button></div>';
-  setTimeout(function(){document.body.appendChild(o);},500);o.querySelector('#ag').onclick=function(){o.remove();go(k==='sound'?'soundq':k==='make'?'makeq':k==='word'?'wordq':'dictq');};o.querySelector('#hm').onclick=function(){o.remove();go('home');};}
+  setTimeout(function(){document.body.appendChild(o);},500);o.querySelector('#ag').onclick=function(){o.remove();go(k==='sound'?'soundq':k==='make'?(lis?'makel':'makeq'):k==='word'?'wordq':'dictq');};o.querySelector('#hm').onclick=function(){o.remove();go('home');};}
 function pickNew(arr,keyf){var c=arr.filter(function(a){return !G.used[keyf(a)];});if(!c.length){G.used={};c=arr;}var x=pick(c);G.used[keyf(x)]=1;return x;}
 
 // ----- 소리 퀴즈 -----
@@ -206,8 +206,8 @@ function ansSound(i){if(G.lock)return;ac();var o=G.opts[i],el=document.getElemen
 // ----- 2. 글자 만들기 -----
 function rMakeHome(){
   app.innerHTML=hud('🧩 글자 만들기')+'<div class="play"><div class="q" style="font-size:34px">자음 + 모음 = 글자!</div><div class="make"><div class="slot f">ㄱ</div><span class="plus">+</span><div class="slot f" style="color:#e8590c">ㅏ</div><span class="plus">=</span><div class="res">가</div></div>'+
-    '<div style="width:min(520px,90vw)"><button class="btn" onclick="App.go(\'makeq\')">✏️ 문제 풀기 (8문제)</button><button class="btn ghost" onclick="App.go(\'makefree\')">🎨 자유롭게 만들기</button></div>'+
-    '<div class="tg"><button class="'+(D.listen?'on':'')+'" onclick="App.listen()">👂 듣고 만들기 '+(D.listen?'켬':'끔')+'</button><button class="'+(D.jong?'on':'')+'" onclick="App.jong()">받침 넣기 '+(D.jong?'켬':'끔')+'</button></div></div>';}
+    '<div style="width:min(520px,90vw)"><button class="btn" onclick="App.go(\'makeq\')">👀 보고 만들기 <small style="font-size:18px">(글자를 보고)</small></button><button class="btn" style="background:#f76707;box-shadow:0 6px 0 #d9480f" onclick="App.go(\'makel\')">👂 듣고 만들기 <small style="font-size:18px">(소리만 듣고)</small></button><button class="btn ghost" onclick="App.go(\'makefree\')">🎨 자유롭게 만들기</button></div>'+
+    '<div class="tg"><button class="'+(D.jong?'on':'')+'" onclick="App.jong()">받침 넣기 '+(D.jong?'켬':'끔')+'</button></div><div class="sub">'+(D.best.make?'보고 만들기 '+stars(D.best.make):'')+(D.best.makeL?' · 듣고 만들기 '+stars(D.best.makeL):'')+'</div></div>';}
 function makeUI(free){
   var c=G.c,v=G.v,j=G.j,useJ=free?true:G.useJ,res=c&&v?compose(c,v,j||''):'';
   var h='<div class="make"><div class="slot'+(c?' f':'')+'">'+(c||'')+'</div><span class="plus">+</span><div class="slot'+(v?' f':'')+'" style="color:#e8590c">'+(v||'')+'</div>'+(useJ?'<span class="plus">+</span><div class="slot'+(j?' f':'')+'" style="color:#1971c2;width:90px">'+(j||'')+'</div>':'')+'<span class="plus">=</span><div class="res">'+res+'</div></div>';
@@ -222,7 +222,7 @@ function qMake(){
   do{c=pick(CONS)[0];v=pick(VOWS)[0];j=useJ&&Math.random()<.6?pick(JONGS.slice(1)):'';tgt=compose(c,v,j);}while(G.used[tgt]);G.used[tgt]=1;
   G.target=tgt;G.tc=c;G.tv=v;G.tj=j;G.c=null;G.v=null;G.j='';G.jset=false;G.useJ=useJ;G.hc=G.hv=G.hj=null;G.ans={};rMakeQ();setTimeout(qsay,300);}
 function rMakeQ(){
-  app.innerHTML=hud('🧩 글자 만들기',prog())+'<div class="play"><div class="q">'+(D.listen?'소리를 듣고 글자를 만들어요 <button class="spk" style="width:60px;height:60px;font-size:30px" onclick="App.qsay()">🔊</button>':'<span style="font-size:70px;color:var(--main)">'+G.target+'</span> '+(hasB(G.target)?'을':'를')+' 만들어요 <button class="spk" style="width:60px;height:60px;font-size:30px" onclick="App.qsay()">🔊</button>')+'</div><div id="mk">'+makeUI(false)+'</div>'+
+  app.innerHTML=hud(G.listen?'👂 듣고 만들기':'👀 보고 만들기',prog())+'<div class="play"><div class="q">'+(G.listen?'소리를 잘 듣고 글자를 만들어요 <button class="spk" onclick="App.qsay()">🔊</button>':'<span style="font-size:70px;color:var(--main)">'+G.target+'</span> '+(hasB(G.target)?'을':'를')+' 만들어요 <button class="spk" style="width:60px;height:60px;font-size:30px" onclick="App.qsay()">🔊</button>')+'</div><div id="mk">'+makeUI(false)+'</div>'+
     '<div class="msg" id="msg"></div><button class="btn green" style="max-width:360px" onclick="App.mcheck()">다 만들었어요 ✔</button></div>';}
 function mk(part,x){
   if(G.lock)return;ac();sfx('tap');
@@ -340,9 +340,9 @@ function tileTap(k){if(G.lock)return;ac();var t=G.tiles[k],w=G.word[1],pos=G.fil
 // ---------- 공통 ----------
 function confetti(){var em=['🎉','⭐','🎊','✨','🌟'];for(var i=0;i<22;i++){var s=document.createElement('div');s.className='conf em';s.textContent=em[i%em.length];s.style.left=R(0,95)+'vw';
   s.style.animationDuration=(1.6+Math.random()*1.6)+'s';s.style.animationDelay=(Math.random()*0.5)+'s';document.body.appendChild(s);(function(n){setTimeout(function(){n.remove();},4000);})(s);}}
-var SCR={home:rHome,letters:rLetters,card:rCard,soundq:function(){startRound('sound');},makehome:rMakeHome,makeq:function(){startRound('make');},makefree:function(){G=null;rMakeFree();},
+var SCR={home:rHome,letters:rLetters,card:rCard,soundq:function(){startRound('sound');},makehome:rMakeHome,makeq:function(){startRound('make');},makel:function(){startRound('make',true);},makefree:function(){G=null;rMakeFree();},
   tlist:rTList,trace:rTrace,wordhome:rWordHome,wordq:function(){startRound('word');},dictq:function(){startRound('dict');}};
-var BACK={letters:'home',card:'letters',soundq:'letters',makehome:'home',makeq:'makehome',makefree:'makehome',tlist:'home',trace:'tlist',wordhome:'home',wordq:'wordhome',dictq:'wordhome'};
+var BACK={letters:'home',card:'letters',soundq:'letters',makehome:'home',makeq:'makehome',makefree:'makehome',makel:'makehome',tlist:'home',trace:'tlist',wordhome:'home',wordq:'wordhome',dictq:'wordhome'};
 window.addEventListener('resize',function(){if(scr==='trace'&&document.getElementById('pad')){sizePad();}});
 window.App={go:go,back:function(){speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();go(BACK[scr]||'home');},tog:function(k){D[k]=!D[k];save();rHome();},
   card:function(ch){go('card',ch);},cardSay:cardSay,cardStep:cardStep,trace:startTrace,qsay:qsay,
