@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <script>(function(){var S=window.screen;function g(){try{return +(JSON.parse(localStorage.getItem('kidsUI.v1')||'{}').scale)||1;}catch(e){return 1;}}var lw=-1;function fit(s){if(s==null)s=g();var m=document.querySelector('meta[name=viewport]');if(!m)return;var a=S.width,b=S.height,o=S.orientation&&S.orientation.type,w=o?(o.indexOf('landscape')===0?Math.max(a,b):Math.min(a,b)):a;lw=a;m.setAttribute('content',s===1?'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no':'width='+Math.round(w/s)+',initial-scale='+s+',minimum-scale='+s+',maximum-scale='+s+',user-scalable=no');}window.kidsFit=fit;fit();function chk(){if(S.width!==lw)fit();}window.addEventListener('orientationchange',function(){setTimeout(chk,300);});window.addEventListener('resize',chk);})();</script>
 <script>(function(){var ss=window.speechSynthesis,vs=[],ko=null,keep=[];function load(){if(!ss)return;try{vs=ss.getVoices()||[];}catch(e){vs=[];}ko=null;for(var i=0;i<vs.length;i++){var l=String(vs[i].lang||'').toLowerCase().replace('_','-');if(l.indexOf('ko')===0&&(!ko||vs[i].localService))ko=vs[i];}}if(ss){load();try{ss.addEventListener('voiceschanged',load);}catch(e){ss.onvoiceschanged=load;}}window.kidsVoiceInfo=function(){load();return {api:!!ss,n:vs.length,ko:ko?ko.name+' ('+ko.lang+')':''};};window.kidsSpeak=function(t,rate){if(!ss)return;try{var busy=ss.speaking||ss.pending;if(busy)ss.cancel();if(!ko)load();var u=new SpeechSynthesisUtterance(String(t));u.lang=ko?ko.lang:'ko-KR';if(ko)u.voice=ko;u.rate=rate||0.95;u.volume=1;keep.push(u);if(keep.length>6)keep.shift();var go=function(){try{if(ss.paused)ss.resume();ss.speak(u);}catch(e){}};if(busy)setTimeout(go,150);else go();}catch(e){}};function unlock(){document.removeEventListener('pointerdown',unlock,true);try{if(ss&&!ss.speaking&&!ss.pending){var u=new SpeechSynthesisUtterance(' ');u.volume=0;keep.push(u);ss.speak(u);}}catch(e){}}document.addEventListener('pointerdown',unlock,true);})();</script>
-<script>(function(){var K='kidsGate.v1';function p2(n){return (n<10?'0':'')+n;}function day(){var d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}function prof(){try{var H=JSON.parse(localStorage.getItem('kidsHub.v1')||'null');return H.profiles.filter(function(x){return x.id===H.cur;})[0]||H.profiles[0]||null;}catch(e){return null;}}function grade(){var p=prof();return (p&&p.grade)||'K';}function get(){var g={on:true,goal:15,day:'',sec:0,free:'',pin:'',done:0};try{var o=JSON.parse(localStorage.getItem(K)||'{}');for(var k in o)g[k]=o[k];}catch(e){}if(g.day!==day()){g.day=day();g.sec=0;g.done=0;}return g;}function put(g){try{localStorage.setItem(K,JSON.stringify(g));}catch(e){}}function study(){return grade()==='K'?['math','hangul']:['math'];}function page(){var m=String(location.pathname).match(/([A-Za-z0-9_-]+)\.html$/);return m?m[1]:'index';}function open(g){g=g||get();return !g.on||g.free===day()||g.sec>=g.goal*60;}function kind(n){n=n||page();return n==='index'?'hub':(study().indexOf(n)>=0?'study':'play');}window.kidsGate={get:get,put:put,open:open,study:study,kind:kind,day:day,grade:grade,prof:prof};var pg=page(),kd=kind(pg);if(kd==='play'&&!open()){location.replace('index.html#locked');return;}if(kd==='study'){var last=Date.now();['pointerdown','keydown','touchstart'].forEach(function(ev){document.addEventListener(ev,function(){last=Date.now();},true);});setInterval(function(){if(document.visibilityState&&document.visibilityState!=='visible')return;if(Date.now()-last>60000)return;var g=get(),was=open(g);g.sec+=5;if(!was&&open(g)&&!g.done){g.done=1;put(g);toast();}else put(g);},5000);}function toast(){var d=document.createElement('div');d.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:99;background:#2ecc71;color:#fff;font-family:Jua,sans-serif;font-size:24px;padding:12px 24px;border-radius:999px;box-shadow:0 6px 0 #22a35a;text-align:center;max-width:92vw';d.innerHTML='🎉 오늘 공부 목표 완료! 이제 놀이를 할 수 있어요';document.body.appendChild(d);setTimeout(function(){d.remove();},7000);try{if(window.kidsSpeak)kidsSpeak('오늘 공부 목표 완료! 이제 놀이를 할 수 있어요');}catch(e){}}})();</script>
+<script>(function(){var K='kidsGate.v1';function p2(n){return (n<10?'0':'')+n;}function day(){var d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}function prof(){try{var H=JSON.parse(localStorage.getItem('kidsHub.v1')||'null');return H.profiles.filter(function(x){return x.id===H.cur;})[0]||H.profiles[0]||null;}catch(e){return null;}}function grade(){var p=prof();return (p&&p.grade)||'K';}function get(){var g={on:true,goal:15,day:'',cnt:0,free:'',pin:'',done:0,kinds:{}};try{var o=JSON.parse(localStorage.getItem(K)||'{}');for(var k in o)g[k]=o[k];}catch(e){}if(g.goal>60&&!g.v2)g.goal=15;g.v2=1;if(!g.kinds)g.kinds={};if(g.day!==day()){g.day=day();g.cnt=0;g.done=0;}return g;}function put(g){try{localStorage.setItem(K,JSON.stringify(g));}catch(e){}}function defStudy(n){return grade()==='K'?(n==='math'||n==='hangul'):n==='math';}function page(){var m=String(location.pathname).match(/([A-Za-z0-9_-]+)\.html$/);return m?m[1]:'index';}function kind(n,g){n=n||page();if(n==='index')return 'hub';g=g||get();var k=g.kinds[n];if(k==='study'||k==='play')return k;return defStudy(n)?'study':'play';}function study(g){g=g||get();return GAMES.filter(function(x){return kind(x[0],g)==='study';}).map(function(x){return x[0];});}function open(g){g=g||get();return !g.on||g.free===day()||g.cnt>=g.goal||!study(g).length;}var GAMES=[['math','수학'],['hangul','한글'],['robot','로봇 코딩'],['sudoku','스도쿠'],['clock','시계'],['puzzle','퍼즐'],['maze','미로'],['hidden','숨은그림'],['memory','짝 맞추기'],['hospital','동물 병원'],['coloring','색칠'],['piano','건반']];function add(n){try{n=n||1;if(kind()!=='study')return;var g=get(),was=open(g);g.cnt+=n;var now=open(g);if(!was&&now&&!g.done){g.done=1;put(g);toast();}else put(g);}catch(e){}}window.kidsGate={get:get,put:put,open:open,study:study,kind:kind,day:day,grade:grade,prof:prof,add:add,games:GAMES};var kd=kind();if(kd==='play'&&!open()){location.replace('index.html#locked');return;}function toast(){var d=document.createElement('div');d.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:99;background:#2ecc71;color:#fff;font-family:Jua,sans-serif;font-size:24px;padding:12px 24px;border-radius:999px;box-shadow:0 6px 0 #22a35a;text-align:center;max-width:92vw';d.innerHTML='🎉 오늘 공부 목표 완료! 이제 놀이를 할 수 있어요';document.body.appendChild(d);setTimeout(function(){d.remove();},7000);try{if(window.kidsSpeak)setTimeout(function(){kidsSpeak('오늘 공부 목표 완료! 이제 놀이를 할 수 있어요');},1500);}catch(e){}}})();</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#ff9f43">
@@ -135,22 +135,21 @@ function voicePanel(){
   draw();setTimeout(draw,700);
 }
 
-function gateStudyName(){return kidsGate.study().map(function(n){return n==='math'?'수학':'한글';}).join('·');}
-function gateBanner(){if(!window.kidsGate)return '';var g=kidsGate.get();if(!g.on)return '';
+function gateStudyName(){var g=kidsGate.get(),nm={};kidsGate.games.forEach(function(x){nm[x[0]]=x[1];});return kidsGate.study(g).map(function(n){return nm[n]||n;}).join('·');}
+function gateBanner(){if(!window.kidsGate)return '';var g=kidsGate.get();if(!g.on||!kidsGate.study(g).length)return '';
   if(g.free===kidsGate.day())return '<div class="gate">🎈 오늘은 자유 놀이 날!</div>';
-  var m=Math.floor(g.sec/60);
-  if(kidsGate.open(g))return '<div class="gate">🎉 오늘 공부 완료! ('+m+'분) 놀이를 마음껏 해요</div>';
-  var pct=Math.min(100,Math.round(g.sec/(g.goal*60)*100));
-  return '<div class="gate">📚 오늘 공부 <b>'+m+'</b> / '+g.goal+'분<div class="gb"><div style="width:'+pct+'%"></div></div><small>'+gateStudyName()+'을 '+g.goal+'분 하면 🔒 놀이가 열려요</small></div>';}
+  if(kidsGate.open(g))return '<div class="gate">🎉 오늘 공부 완료! ('+g.cnt+'개) 놀이를 마음껏 해요</div>';
+  var pct=Math.min(100,Math.round(g.cnt/g.goal*100));
+  return '<div class="gate">📚 오늘 공부 <b>'+g.cnt+'</b> / '+g.goal+'개<div class="gb"><div style="width:'+pct+'%"></div></div><small>'+gateStudyName()+'에서 문제·퀘스트를 '+g.goal+'개 하면 🔒 놀이가 열려요</small></div>';}
 function gateCards(h){if(!window.kidsGate)return h;var g=kidsGate.get(),open=kidsGate.open(g);
-  return h.replace(/<a class="app" href="([A-Za-z0-9_-]+)\.html"([^>]*)>/g,function(m0,n,rest){var k=kidsGate.kind(n);
+  return h.replace(/<a class="app" href="([A-Za-z0-9_-]+)\.html"([^>]*)>/g,function(m0,n,rest){var k=kidsGate.kind(n,g);
     if(k==='study'&&g.on)return '<a class="app" href="'+n+'.html"'+rest+'><span class="sb">📚 공부</span>';
     if(k==='play'&&!open)return '<a class="app locked" href="#" onclick="lockMsg();return false;"'+rest+'><span class="lk">🔒</span>';
     return m0;});}
-function lockMsg(){var g=kidsGate.get(),left=Math.max(1,Math.ceil((g.goal*60-g.sec)/60)),o=document.createElement('div');o.className='overlay';
-  o.innerHTML='<div class="panel"><div style="font-size:60px">🔒</div><div style="font-size:26px;margin:6px 0">놀이는 공부를 마치면 열려요</div><div style="font-size:21px;color:#8a7a70">'+gateStudyName()+'을 <b>'+left+'분</b> 더 하면 열려요!</div><button id="gm" style="margin-top:14px">📚 공부하러 가기</button><button class="cx" id="cl">닫기</button></div>';
+function lockMsg(){var g=kidsGate.get(),left=Math.max(1,g.goal-g.cnt),o=document.createElement('div');o.className='overlay';
+  o.innerHTML='<div class="panel"><div style="font-size:60px">🔒</div><div style="font-size:26px;margin:6px 0">놀이는 공부를 마치면 열려요</div><div style="font-size:21px;color:#8a7a70">'+gateStudyName()+'에서 <b>'+left+'개</b> 더 하면 열려요!</div><button id="gm" style="margin-top:14px">📚 공부하러 가기</button><button class="cx" id="cl">닫기</button></div>';
   document.body.appendChild(o);o.querySelector('#gm').onclick=function(){location.href=kidsGate.study()[0]+'.html';};o.querySelector('#cl').onclick=function(){o.remove();};
-  if(window.kidsSpeak)kidsSpeak(gateStudyName()+' 공부를 '+left+'분 더 하면 놀이가 열려요');}
+  if(window.kidsSpeak)kidsSpeak('공부를 '+left+'개 더 하면 놀이가 열려요');}
 // ----- 부모 비밀번호 (수학 놀이터와 같은 번호) -----
 function mathPinKey(){var HB=hub(),PF=curProf(HB);return PF?mathKey(PF.id):'kidsMath.v1';}
 function curPin(){var g=kidsGate.get();if(g.pin)return g.pin;var M=get(mathPinKey());return (M&&M.settings&&M.settings.pin)||'';}
@@ -165,21 +164,27 @@ function parentOpen(change){var cur=change?'':curPin(),st={buf:'',first:''},o=do
     setTimeout(function(){if(!cur){if(!st.first){st.first=st.buf;st.buf='';draw();}else if(st.first===st.buf){savePin(st.buf);o.remove();parentPanel();}else{st={buf:'',first:''};draw('두 번 입력한 번호가 달라요. 다시 정해 주세요');}}
       else if(st.buf===cur){o.remove();parentPanel();}else{st.buf='';draw('번호가 달라요');}},150);}
   draw();}
-function parentPanel(){var o=document.createElement('div');o.className='overlay';document.body.appendChild(o);
+function parentPanel(){var o=document.createElement('div');o.className='overlay';o.style.alignItems='flex-start';o.style.overflowY='auto';document.body.appendChild(o);
   function row(label,val,btns){return '<div class="prow"><span>'+label+'</span><span style="display:flex;gap:6px;align-items:center">'+val+btns+'</span></div>';}
-  function draw(){var g=kidsGate.get(),td=kidsGate.day(),m=Math.floor(g.sec/60),s=g.sec%60,HB=hub(),PF=curProf(HB);
-    var h='<div class="panel" style="max-width:520px"><div style="font-size:28px;margin-bottom:6px">🔐 부모 설정</div>';
+  function draw(){var g=kidsGate.get(),td=kidsGate.day(),HB=hub(),PF=curProf(HB);
+    var h='<div class="panel" style="max-width:560px"><div style="font-size:28px;margin-bottom:6px">🔐 부모 설정</div>';
     h+=row('📚 공부 먼저 하기','',' <button id="on" class="'+(g.on?'':'off')+'">'+(g.on?'켬':'끔')+'</button>');
-    h+=row('🎯 하루 공부 목표','<b style="font-size:24px;white-space:nowrap">'+g.goal+'분</b>',' <button id="dn">－</button><button id="up">＋</button>');
-    h+=row('⏱️ 오늘 공부한 시간','<b>'+m+'분 '+s+'초</b>','');
+    h+=row('🎯 하루 목표 (문제·퀘스트)','<b style="font-size:24px;white-space:nowrap">'+g.goal+'개</b>',' <button id="dn">－</button><button id="up">＋</button>');
+    h+=row('✅ 오늘 한 개수','<b style="white-space:nowrap">'+g.cnt+'개</b>',' <button id="rs" class="off">0으로</button>');
     h+=row('🎈 오늘만 자유 놀이','',' <button id="fr" class="'+(g.free===td?'':'off')+'">'+(g.free===td?'켬':'끔')+'</button>');
-    h+='<div style="font-size:17px;color:#8a7a70;text-align:left;margin-top:10px;line-height:1.5">• 공부로 치는 놀이: <b>'+gateStudyName()+'</b> ('+(PF?GRN[PF.grade]:'유치원')+' 기준. 유치원은 수학·한글, 1학년부터는 수학만)<br>• 공부 화면을 보면서 1분 안에 한 번이라도 누른 시간만 셉니다.<br>• 목표를 채우면 그날은 놀이가 모두 열려요.</div>';
-    h+='<button id="pw" style="margin-top:12px;background:#fff;color:#3b2f2a;box-shadow:0 4px 0 #f1e6d8;border:2px solid #f1e6d8">🔑 비밀번호 바꾸기</button><button id="cl" style="margin-top:10px">닫기</button></div>';
+    h+='<div style="font-size:22px;text-align:left;margin:14px 0 4px">공부 / 놀이 정하기 <small style="font-size:15px;color:#8a7a70">눌러서 바꿔요</small></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+    kidsGate.games.forEach(function(x){var k=kidsGate.kind(x[0],g);h+='<button data-g="'+x[0]+'" class="gk" style="font-size:19px;padding:10px 6px;'+(k==='study'?'':'background:#ffa94d;box-shadow:0 4px 0 #e8590c')+'">'+(k==='study'?'📚 ':'🎈 ')+x[1]+'</button>';});
+    h+='</div><div style="font-size:16px;color:#8a7a70;text-align:left;margin-top:10px;line-height:1.55">• 📚 공부로 정한 놀이에서 하나 할 때마다 1개씩 세요: 수학·한글·시계는 맞힌 문제 1개, 한글 따라 쓰기 1글자, 로봇 1판, 스도쿠·퍼즐·미로·숨은그림·짝 맞추기 1판, 동물 병원 환자 1명, 색칠 1장, 건반 1곡.<br>• 목표를 채우면 그날은 🎈 놀이가 모두 열려요.<br>• 아무것도 안 바꾸면 '+(PF?GRN[PF.grade]:'유치원')+' 기준 기본값이에요 (유치원: 수학·한글, 1학년부터: 수학).</div>';
+    h+='<button id="df" style="margin-top:10px;background:#fff;color:#3b2f2a;box-shadow:0 4px 0 #f1e6d8;border:2px solid #f1e6d8;font-size:20px">↩️ 공부/놀이 기본값으로</button><button id="pw" style="margin-top:10px;background:#fff;color:#3b2f2a;box-shadow:0 4px 0 #f1e6d8;border:2px solid #f1e6d8;font-size:20px">🔑 비밀번호 바꾸기</button><button id="cl" style="margin-top:10px">닫기</button></div>';
     o.innerHTML=h;
-    o.querySelector('#on').onclick=function(){var g2=kidsGate.get();g2.on=!g2.on;kidsGate.put(g2);draw();};
-    o.querySelector('#dn').onclick=function(){var g2=kidsGate.get();g2.goal=Math.max(5,g2.goal-5);kidsGate.put(g2);draw();};
-    o.querySelector('#up').onclick=function(){var g2=kidsGate.get();g2.goal=Math.min(90,g2.goal+5);kidsGate.put(g2);draw();};
-    o.querySelector('#fr').onclick=function(){var g2=kidsGate.get();g2.free=g2.free===td?'':td;kidsGate.put(g2);draw();};
+    function upd(f){var g2=kidsGate.get();f(g2);kidsGate.put(g2);draw();}
+    o.querySelector('#on').onclick=function(){upd(function(g2){g2.on=!g2.on;});};
+    o.querySelector('#dn').onclick=function(){upd(function(g2){g2.goal=Math.max(1,g2.goal-(g2.goal>10?5:1));});};
+    o.querySelector('#up').onclick=function(){upd(function(g2){g2.goal=Math.min(100,g2.goal+(g2.goal>=10?5:1));});};
+    o.querySelector('#rs').onclick=function(){upd(function(g2){g2.cnt=0;g2.done=0;});};
+    o.querySelector('#fr').onclick=function(){upd(function(g2){g2.free=g2.free===td?'':td;});};
+    Array.prototype.forEach.call(o.querySelectorAll('.gk'),function(b){b.onclick=function(){var n=b.getAttribute('data-g');upd(function(g2){g2.kinds[n]=kidsGate.kind(n,g2)==='study'?'play':'study';});};});
+    o.querySelector('#df').onclick=function(){upd(function(g2){g2.kinds={};});};
     o.querySelector('#pw').onclick=function(){o.remove();parentOpen(true);};
     o.querySelector('#cl').onclick=function(){o.remove();render();};}
   draw();}
