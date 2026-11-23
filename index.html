@@ -106,7 +106,7 @@ function render(){
   h+='<a class="app" href="hangul.html" style="background:#e5dbff"><div class="em"><span style="font-family:Jua,sans-serif;font-size:.85em;display:inline-flex;align-items:center;justify-content:center;background:#7950f2;color:#fff;border-radius:22%;width:1.1em;height:1.1em;line-height:1">가</span></div><div class="name">한글 놀이</div><div class="prog">따라 쓴 글자 '+hgT+' / 24<br>⭐ '+hgS+'</div><div class="bar"><div style="width:'+Math.round(hgT/24*100)+'%"></div></div></a>';
   h+='<a class="app" href="sudoku.html" style="background:#fff3bf"><div class="em">🔢</div><div class="name">그림 스도쿠</div><div class="prog">푼 판 '+(SD.solved||0)+'개<br>⭐ '+sdS+'</div></a>';
   h+='<a class="app" href="puzzle.html" style="background:#d3f9d8"><div class="em">🧩</div><div class="name">퍼즐 놀이</div><div class="prog">완성한 그림 '+pzDone+' / 40<br>⭐ '+pzS+'</div><div class="bar"><div style="width:'+Math.round(pzDone/40*100)+'%"></div></div></a>';
-  h+='<a class="app" href="robot.html" style="background:#dff3ff"><div class="em">🤖</div><div class="name">로봇 코딩</div><div class="prog">깬 판 '+rbDone+' / 38<br>⭐ '+rbS+'</div><div class="bar"><div style="width:'+Math.round(rbDone/38*100)+'%"></div></div></a>';
+  h+='<a class="app" href="robot.html" style="background:#dff3ff"><div class="em">🤖</div><div class="name">로봇 코딩</div><div class="prog">깬 판 '+rbDone+' / 66<br>⭐ '+rbS+'</div><div class="bar"><div style="width:'+Math.round(rbDone/66*100)+'%"></div></div></a>';
   h+='</div><div class="foot"><button onclick="sizePanel()">📐 화면 크기 '+Math.round(uiScale()*100)+'%</button> <button onclick="voicePanel()">🗣️ 소리 확인</button> <button onclick="parentOpen()">🔐 부모 설정</button></div>';
   h=gateCards(h);
   document.getElementById('app').innerHTML=h;
