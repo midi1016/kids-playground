@@ -77,7 +77,7 @@ function render(){
   var name=PF?PF.name:'';
   var mStars=M.stars||0,mSt=(M.stickers||[]).length,ss=M.session,tod=ss&&ss.date===today()?ss:null,daily=(M.settings&&M.settings.daily)||(PF&&({K:10,'1':15})[PF.grade])||20;
   var mDone=tod?(tod.done?tod.items.length:tod.idx):0,mTot=tod?tod.items.length:daily;
-  var zU=Z.unlocked||{easy:1,normal:1,hard:1},zClear=0;['easy','normal','hard','master','legend'].forEach(function(k){zClear+=Math.max(0,Math.min(10,(zU[k]||1)-1));});zClear=zClear,zStars=0;if(Z.best)for(var d in Z.best)for(var s in Z.best[d])zStars+=Z.best[d][s].s||0;
+  var zU=Z.unlocked||{easy:1,normal:1,hard:1},zClear=['easy','normal','hard','master','legend'].reduce(function(s,k){return s+Math.max(0,Math.min(10,(zU[k]||1)-1));},0),zStars=0;if(Z.best)for(var d in Z.best)for(var s in Z.best[d])zStars+=Z.best[d][s].s||0;
   var hU=H.unlocked||{find:1,diff:1},hClear=(hU.find-1)+(hU.diff-1),hStars=0;if(H.best)for(var m in H.best)hStars+=sum(H.best[m]);
   var qStars=0,qDone=0;if(Q.best)for(var q in Q.best){qStars+=Q.best[q].s||0;qDone++;}
   var ckS=0;if(CK.best)for(var cb in CK.best)ckS+=CK.best[cb]||0;
