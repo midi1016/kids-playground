@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | index.html | 놀이터 첫 화면. 아이 프로필 전환, 앱 카드, 진행 상황 | kidsHub.v1 `{profiles:[{id,name,grade}],cur}` |
 | math.html | 수학 9유형, 학년(K/1/2/3)별 범위, 부모 화면(비밀번호) | kidsMath.v1 (p1), kidsMath.v1.<id> (다른 아이) |
-| maze.html | 미로 탐험대 | kidsMaze.v1 |
+| maze.html | 미로 탐험대. 난이도 5가지×10단계: 쉬움·보통·어려움 + 🌋고수(16칸~, 열쇠·문 2쌍) + 👑전설(20칸~, 열쇠·문 3쌍, 🌫️안개: 주변만 보임). 칸은 최소 13px | kidsMaze.v1 `{unlocked:{난이도:단계},best}` |
 | hidden.html | 숨은그림 탐정(선 그림 장면 10종, 다른 그림 찾기) | kidsHidden.v2 |
 | memory.html | 짝 맞추기 3/8/12/18/24/30쌍, 둘이서 모드 | kidsMemory.v1 |
 | hospital.html | 동물 병원. SVG 동물 13종, 손가락 동작(문지르기·끌어다 놓기) | kidsHospital.v1 |

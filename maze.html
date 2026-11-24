@@ -85,7 +85,9 @@ var THEMES={
 var DIFFS={
   easy:{name:'쉬움',em:'🌱',base:5,grow:0.45,gems:3,keyFrom:4},
   normal:{name:'보통',em:'🌳',base:8,grow:0.6,gems:5,keyFrom:2},
-  hard:{name:'어려움',em:'🔥',base:11,grow:0.85,gems:7,keyFrom:1}
+  hard:{name:'어려움',em:'🔥',base:11,grow:0.85,gems:7,keyFrom:1},
+  master:{name:'고수',em:'🌋',base:16,grow:1,gems:9,keyFrom:1,doors:2},
+  legend:{name:'전설',em:'👑',base:20,grow:1,gems:12,keyFrom:1,doors:3,fog:true}
 };
 var STAGES=10,KEY='kidsMaze.v1';
 var N=1,E=2,S=4,W=8,DX={1:0,2:1,4:0,8:-1},DY={1:-1,2:0,4:1,8:0},OPP={1:4,2:8,4:1,8:2};
@@ -96,6 +98,7 @@ function shuffle(a){for(var i=a.length-1;i>0;i--){var j=R(0,i),t=a[i];a[i]=a[j];
 var D={theme:'animal',diff:'easy',unlocked:{easy:1,normal:1,hard:1},best:{easy:{},normal:{},hard:{}}};
 try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);for(var k in o)D[k]=o[k];}}catch(e){}
 if(D.music===undefined)D.music=true;if(D.sfx===undefined)D.sfx=true;
+for(var dk in DIFFS){if(!D.unlocked[dk])D.unlocked[dk]=1;if(!D.best[dk])D.best[dk]={};}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
 
 // ---------- 미로 생성 ----------
@@ -115,25 +118,30 @@ function bfs(m,from,blocked){ // returns {dist,prev}
   var n=m.cols*m.rows,dist=new Array(n),prev=new Array(n),q=[from],h=0;dist[from]=0;
   while(h<q.length){var c=q[h++],x=c%m.cols,y=Math.floor(c/m.cols);
     [N,E,S,W].forEach(function(dir){if(m.cells[c]&dir)return;var nc=(y+DY[dir])*m.cols+(x+DX[dir]);
-      if(dist[nc]!==undefined||nc===blocked)return;dist[nc]=dist[c]+1;prev[nc]=c;q.push(nc);});}
+      if(dist[nc]!==undefined||(blocked!=null&&typeof blocked==='object'?blocked[nc]:nc===blocked))return;dist[nc]=dist[c]+1;prev[nc]=c;q.push(nc);});}
   return {dist:dist,prev:prev};
 }
 function pathTo(b,to){var p=[];if(b.dist[to]===undefined)return p;while(to!==undefined){p.unshift(to);to=b.prev[to];}return p;}
-function buildLevel(diff,stage,aspect){
+function buildLevel(diff,stage,aspect,maxC,maxR){
   var df=DIFFS[diff],short=Math.round(df.base+df.grow*(stage-1)),long=Math.max(short,Math.round(short*Math.min(1.6,Math.max(1,aspect))));
   var portrait=aspect>=1;
   var m={cols:portrait?short:long,rows:portrait?long:short};
   if(aspect<1){m.cols=Math.round(short*Math.min(1.6,1/aspect));m.rows=short;}
+  if(maxC&&m.cols>maxC)m.cols=maxC;if(maxR&&m.rows>maxR)m.rows=maxR;
   m.cells=makeMaze(m.cols,m.rows);m.start=0;
-  var b=bfs(m,0),far=0;for(var i=0;i<b.dist.length;i++){if(b.dist[i]>b.dist[far])far=i;}
+  var b=bfs(m,0),far=0,i;for(i=0;i<b.dist.length;i++){if(b.dist[i]>b.dist[far])far=i;}
   m.goal=far;var path=pathTo(b,far),onPath={};path.forEach(function(c){onPath[c]=1;});
-  m.door=-1;m.key=-1;
-  if(stage>=df.keyFrom&&path.length>=8){
-    var dc=path[Math.floor(path.length*0.6)],bk=bfs(m,0,dc),best=-1,bd=-1;
-    for(i=0;i<bk.dist.length;i++){if(bk.dist[i]===undefined||onPath[i]||i===0)continue;if(bk.dist[i]>bd){bd=bk.dist[i];best=i;}}
-    if(best>=0&&bd>=3){m.door=dc;m.key=best;}
+  m.doors=[];m.keys=[];var nd=stage>=df.keyFrom?(df.doors||1):0,used={};used[0]=1;used[far]=1;
+  if(nd&&path.length>=8){
+    var cuts=[];for(var j=0;j<nd;j++)cuts.push(path[Math.floor(path.length*(j+1)/(nd+1.2))]);
+    cuts.forEach(function(c){used[c]=1;});
+    for(j=0;j<nd;j++){var blk={};for(var q=j;q<nd;q++)blk[cuts[q]]=1; // j번째 열쇠는 j번째 문 앞에서 주울 수 있게
+      var bk=bfs(m,0,blk),best=-1,bd=-1;
+      for(i=0;i<bk.dist.length;i++){if(bk.dist[i]===undefined||onPath[i]||used[i])continue;if(bk.dist[i]>bd){bd=bk.dist[i];best=i;}}
+      if(best<0||bd<3)break;m.doors.push(cuts[j]);m.keys.push(best);used[best]=1;}
   }
-  var free=[];for(i=0;i<m.cells.length;i++){if(i!==m.start&&i!==m.goal&&i!==m.door&&i!==m.key)free.push(i);}
+  m.door=m.doors.length?m.doors[0]:-1;m.key=m.keys.length?m.keys[0]:-1;m.fog=!!df.fog;
+  var free=[];for(i=0;i<m.cells.length;i++){if(!used[i]&&m.doors.indexOf(i)<0)free.push(i);}
   m.gems={};shuffle(free).slice(0,df.gems).forEach(function(c){m.gems[c]=1;});m.gemTotal=Math.min(df.gems,free.length);
   return m;
 }
@@ -156,7 +164,7 @@ function rStages(){
   var h='<div class="hud"><button class="pill" onclick="App.go(\'home\')">🏠</button><div class="grow" style="text-align:center;font-size:28px">'+t.player+' '+t.name+' · '+df.em+' '+df.name+'</div></div><h2>스테이지를 골라요</h2><div class="grid stages">';
   for(var i=1;i<=STAGES;i++){var b=D.best[d][i],lock=i>D.unlocked[d];
     h+='<button class="sbtn'+(lock?' lock':'')+'" onclick="App.play('+i+')">'+(lock?'🔒':i)+'<small>'+(b?stars(b.s):'')+'</small><div class="t">'+(b?'⏱ '+fmt(b.t):'')+'</div></button>';}
-  h+='</div><div class="sub" style="margin-top:18px">'+t.gem+' 를 모두 모으면 ★★★<br>'+(df.keyFrom<=STAGES?'🔑 '+df.keyFrom+'단계부터 열쇠와 문이 나와요':'')+'</div>';
+  h+='</div><div class="sub" style="margin-top:18px">'+t.gem+' 를 모두 모으면 ★★★<br>'+(df.keyFrom<=STAGES?'🔑 '+df.keyFrom+'단계부터 열쇠와 문이 나와요'+(df.doors>1?' (문 '+df.doors+'개!)':''):'')+(df.fog?'<br>🌫️ <b>안개 미로</b>: 가까운 곳만 보여요. 지나온 길은 흐리게 남아요':'')+'</div>';
   app.innerHTML=h;
 }
 function rGame(){
@@ -170,9 +178,9 @@ function rGame(){
 function startLevel(stage){
   var bd={w:window.innerWidth,h:window.innerHeight};
   var landscape=bd.w>bd.h,aw=landscape?bd.w-300:bd.w-28,ah=landscape?bd.h-90:bd.h-260;
-  var m=buildLevel(D.diff,stage,ah/aw);
-  G={stage:stage,m:m,pos:m.start,hasKey:false,doorOpen:m.door<0,gems:0,trail:{},t0:0,elapsed:0,hintCells:null,hintUntil:0,hints:0,done:false};
-  G.trail[m.start]=1;
+  var m=buildLevel(D.diff,stage,ah/aw,Math.floor(aw/13),Math.floor(ah/13));
+  G={stage:stage,m:m,pos:m.start,keys:0,opened:{},taken:{},seen:{},gems:0,trail:{},t0:0,elapsed:0,hintCells:null,hintUntil:0,hints:0,done:false};
+  G.trail[m.start]=1;see(m.start);
   go('game');
 }
 var cv,ctx,cell=20,ox=0,oy=0;
@@ -191,42 +199,48 @@ function draw(){
   var m=G.m,t=THEMES[D.theme],i,p;
   ctx.fillStyle=t.floor;ctx.fillRect(0,0,cell*m.cols,cell*m.rows);
   ctx.fillStyle=t.trail;for(var k in G.trail){p=cxy(+k);ctx.fillRect(p[0]*cell,p[1]*cell,cell,cell);}
-  if(G.hintCells&&Date.now()<G.hintUntil){var a=0.35+0.3*Math.sin(Date.now()/150);ctx.fillStyle='rgba(255,210,0,'+a+')';
-    G.hintCells.forEach(function(c){var q=cxy(c);ctx.beginPath();ctx.arc(q[0]*cell+cell/2,q[1]*cell+cell/2,cell*0.22,0,Math.PI*2);ctx.fill();});}
   for(k in m.gems)emoji(t.gem,+k,0.6);
-  if(m.key>=0&&!G.hasKey&&!G.keyUsed)emoji('🔑',m.key,0.66);
-  if(m.door>=0&&!G.doorOpen)emoji('🚪',m.door,0.8);
+  m.keys.forEach(function(c){if(!G.taken[c])emoji('🔑',c,0.66);});
+  m.doors.forEach(function(c){if(!G.opened[c])emoji('🚪',c,0.8);});
   emoji(t.goal,m.goal,0.78);
   ctx.strokeStyle=t.wall;ctx.lineWidth=Math.max(3,Math.round(cell*0.12));ctx.lineCap='round';ctx.beginPath();
   for(i=0;i<m.cells.length;i++){p=cxy(i);var x=p[0]*cell,y=p[1]*cell,w=m.cells[i];
     if(w&N){ctx.moveTo(x,y);ctx.lineTo(x+cell,y);}if(w&W){ctx.moveTo(x,y);ctx.lineTo(x,y+cell);}
     if((w&E)&&p[0]===m.cols-1){ctx.moveTo(x+cell,y);ctx.lineTo(x+cell,y+cell);}if((w&S)&&p[1]===m.rows-1){ctx.moveTo(x,y+cell);ctx.lineTo(x+cell,y+cell);}}
   ctx.stroke();
+  if(m.fog){var pp=cxy(G.pos);for(i=0;i<m.cells.length;i++){p=cxy(i);var dd=Math.sqrt((p[0]-pp[0])*(p[0]-pp[0])+(p[1]-pp[1])*(p[1]-pp[1]));if(dd<=2.7)continue;
+      ctx.fillStyle=G.seen[i]?'rgba(20,25,45,.55)':'rgba(20,25,45,.96)';ctx.fillRect(p[0]*cell-0.5,p[1]*cell-0.5,cell+1,cell+1);}}
+  if(G.hintCells&&Date.now()<G.hintUntil){var a=0.35+0.3*Math.sin(Date.now()/150);ctx.fillStyle='rgba(255,210,0,'+a+')';
+    G.hintCells.forEach(function(c){var q=cxy(c);ctx.beginPath();ctx.arc(q[0]*cell+cell/2,q[1]*cell+cell/2,cell*0.22,0,Math.PI*2);ctx.fill();});}
   emoji(t.player,G.pos,0.8);
 }
+function see(c){if(!G.m.fog)return;var pp=cxy(c);for(var i=0;i<G.m.cells.length;i++){var p=cxy(i);if((p[0]-pp[0])*(p[0]-pp[0])+(p[1]-pp[1])*(p[1]-pp[1])<=7.3)G.seen[i]=1;}}
 function toast(msg){var t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.className='toast on';clearTimeout(toast.h);toast.h=setTimeout(function(){t.className='toast';},1300);}
 function tryMove(dir){
   if(G.done)return false;var m=G.m,c=G.pos;if(m.cells[c]&dir)return false;
   var p=cxy(c),nc=(p[1]+DY[dir])*m.cols+(p[0]+DX[dir]);
-  if(nc===m.door&&!G.doorOpen){if(G.hasKey){G.doorOpen=true;G.hasKey=false;G.keyUsed=true;toast('문이 열렸어요! 🚪✨');beep(880);}else{toast('열쇠가 필요해요! 🔑');beep(220);return false;}}
+  if(m.doors.indexOf(nc)>=0&&!G.opened[nc]){if(G.keys>0){G.opened[nc]=1;G.keys--;toast('문이 열렸어요! 🚪✨');beep(880);}else{toast('열쇠가 필요해요! 🔑');beep(220);return false;}}
   if(!G.t0){G.t0=Date.now();startTimer();}
-  G.pos=nc;G.trail[nc]=1;footstep();
+  G.pos=nc;G.trail[nc]=1;see(nc);footstep();
   if(m.gems[nc]){delete m.gems[nc];G.gems++;beep(990);}
-  if(nc===m.key&&!G.hasKey&&!G.keyUsed){G.hasKey=true;toast('열쇠를 찾았어요! 🔑');beep(760);}
+  if(m.keys.indexOf(nc)>=0&&!G.taken[nc]){G.taken[nc]=1;G.keys++;toast('열쇠를 찾았어요! 🔑');beep(760);}
   updHud();draw();
   if(nc===m.goal)win();
   return true;
 }
 function updTog(){var a=document.getElementById('mu'),b=document.getElementById('sf');if(a)a.textContent=D.music?'🎵 음악 켬':'🔇 음악 끔';if(b)b.textContent=D.sfx?'🔊 효과음 켬':'🔈 효과음 끔';}
 function updHud(){updTog();var t=THEMES[D.theme],g=document.getElementById('gm');if(g)g.textContent=t.gem+' '+G.gems+'/'+G.m.gemTotal;
-  var k=document.getElementById('ky');if(k){if(G.m.door>=0){k.style.display='';k.textContent=G.keyUsed?'🔓':(G.hasKey?'🔑 있음':'🔑 찾기');}}}
+  var k=document.getElementById('ky');if(k){var nd=G.m.doors.length;if(nd){k.style.display='';var op=Object.keys(G.opened).length;k.textContent=op>=nd?'🔓 다 열었어요':'🔑 '+G.keys+' · 🚪 '+op+'/'+nd;}}}
 function startTimer(){stopTimer();timerId=setInterval(function(){if(!G||G.done)return;G.elapsed=Date.now()-G.t0;var e=document.getElementById('tm');if(e)e.textContent='⏱ '+fmt(G.elapsed);},250);}
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
 function hint(){
-  if(G.done)return;var m=G.m,target=(m.door>=0&&!G.doorOpen&&!G.hasKey)?m.key:m.goal;
-  var b=bfs(m,G.pos,(m.door>=0&&!G.doorOpen&&!G.hasKey)?m.door:-1),p=pathTo(b,target);
-  G.hintCells=p.slice(1,9);G.hintUntil=Date.now()+2600;G.hints++;
-  toast(target===m.key?'먼저 열쇠를 찾아봐요! 🔑':'이쪽으로 가 봐요! ✨');
+  if(G.done)return;var m=G.m,blk={},target=-1;m.doors.forEach(function(c){if(!G.opened[c])blk[c]=1;});
+  var b=bfs(m,G.pos,blk),msg='이쪽으로 가 봐요! ✨';
+  if(b.dist[m.goal]!==undefined)target=m.goal;
+  else if(G.keys>0){var bd=1e9;m.doors.forEach(function(c){if(G.opened[c])return;var o={};for(var k in blk)if(+k!==c)o[k]=1;var b2=bfs(m,G.pos,o);if(b2.dist[c]!==undefined&&b2.dist[c]<bd){bd=b2.dist[c];target=c;b=b2;}});msg='열쇠로 문을 열어요! 🚪';}
+  else{var bk=1e9;m.keys.forEach(function(c){if(!G.taken[c]&&b.dist[c]!==undefined&&b.dist[c]<bk){bk=b.dist[c];target=c;}});msg='먼저 열쇠를 찾아봐요! 🔑';}
+  if(target<0)return;var p=pathTo(b,target);
+  G.hintCells=p.slice(1,9);G.hintUntil=Date.now()+2600;G.hints++;toast(msg);
   (function anim(){if(!G||screen!=='game')return;draw();if(Date.now()<G.hintUntil)requestAnimationFrame(anim);else{G.hintCells=null;draw();}})();
 }
 function win(){try{kidsGate.add(1);}catch(e){}
