@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#ff922b">
+<title>부모 리모컨</title>
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#fff7ec;color:#3b2f2a;font-family:'Jua','Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+#app{max-width:560px;margin:0 auto;padding:14px 14px 60px}
+h1{font-weight:normal;font-size:30px;text-align:center;margin:6px 0 2px}
+.sub{text-align:center;color:#8a7a70;font-size:16px}
+.card{background:#fff;border-radius:22px;box-shadow:0 5px 0 #f1e6d8;padding:16px;margin-top:14px}
+.top{display:flex;align-items:center;gap:10px}.top .nm{font-size:26px;flex:1}.top .seen{font-size:14px;color:#8a7a70;text-align:right}
+.bar{height:12px;border-radius:999px;background:#f1e6d8;overflow:hidden;margin:6px 0}.bar div{height:100%;background:#2ecc71}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-top:1px dashed #f1e6d8;font-size:19px}
+.row b{font-size:22px}
+button{font-family:inherit;font-size:18px;border:0;border-radius:14px;padding:9px 14px;background:#ff922b;color:#fff;box-shadow:0 4px 0 #e8590c;cursor:pointer}
+button:active{transform:translateY(2px);box-shadow:none}
+button.off{background:#fff;color:#3b2f2a;box-shadow:0 4px 0 #f1e6d8;border:2px solid #f1e6d8}
+button.on{background:#2ecc71;box-shadow:0 4px 0 #22a35a}
+button.red{background:#fa5252;box-shadow:0 4px 0 #c92a2a}
+button.big{width:100%;font-size:22px;padding:13px;margin-top:12px}
+.locks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.dur{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.dur button{font-size:16px;padding:7px 10px}
+.games{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.games button{font-size:17px}
+.games button.play{background:#ffa94d;box-shadow:0 4px 0 #e8590c}.games button.study{background:#4dabf7;box-shadow:0 4px 0 #1c7ed6}
+.st{font-size:15px;margin-top:10px;text-align:center}
+.code{font-size:54px;letter-spacing:10px;text-align:center;margin:10px 0}
+.note{font-size:15px;color:#8a7a70;line-height:1.5}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#3b2f2a;color:#fff;padding:10px 20px;border-radius:999px;font-size:17px;z-index:9}
+input{width:100%;font-size:14px;padding:8px;border-radius:10px;border:2px solid #f1e6d8;font-family:monospace}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+var FB='';try{FB=localStorage.getItem('kidsFB')||FB;}catch(e){}
+var GAMES=[['math','수학'],['hangul','한글'],['english','영어'],['robot','로봇 코딩'],['sudoku','스도쿠'],['clock','시계'],['puzzle','퍼즐'],['maze','미로'],['hidden','숨은그림'],['memory','짝 맞추기'],['hospital','동물 병원'],['coloring','색칠'],['piano','건반']];
+var PN={index:'놀이터 첫 화면'};GAMES.forEach(function(x){PN[x[0]]=x[1];});
+var KEY='kidsParent.v1',P={fam:'',dur:0};
+try{var o=JSON.parse(localStorage.getItem(KEY)||'{}');for(var k in o)P[k]=o[k];}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(P));}catch(e){}}
+function rnd(n){var c='abcdefghijkmnpqrstuvwxyz23456789',s='',a=new Uint32Array(n);(window.crypto||window.msCrypto).getRandomValues(a);for(var i=0;i<n;i++)s+=c[a[i]%c.length];return s;}
+var hm=String(location.hash).match(/c=([a-z0-9]{20,})/);if(hm){P.fam=hm[1];save();try{history.replaceState(null,'',location.pathname);}catch(e){}}
+if(!P.fam){P.fam=rnd(24);save();}
+function p2(n){return (n<10?'0':'')+n;}function day(){var d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+function req(m,u,b,cb){var x=new XMLHttpRequest();x.open(m,u,true);x.timeout=8000;x.onload=function(){var d=null;try{d=JSON.parse(x.responseText);}catch(e){}cb&&cb(x.status>=200&&x.status<300,d);};x.onerror=x.ontimeout=function(){cb&&cb(false,null);};if(b!==undefined){x.setRequestHeader('Content-Type','application/json');x.send(JSON.stringify(b));}else x.send();}
+function base(){return FB+'/fam/'+P.fam;}
+var app=document.getElementById('app'),DEV=null,err=false,pairing=null,busy={};
+function toast(s){var d=document.createElement('div');d.className='toast';d.textContent=s;document.body.appendChild(d);setTimeout(function(){d.remove();},1800);}
+function ago(t){if(!t)return '아직 소식 없음';var s=Math.round((Date.now()-t)/1000);if(s<60)return '방금 전';if(s<3600)return Math.round(s/60)+'분 전';if(s<86400)return Math.round(s/3600)+'시간 전';return Math.round(s/86400)+'일 전';}
+function hhmm(t){var d=new Date(t);return d.getHours()+':'+p2(d.getMinutes());}
+function load(){if(!FB)return;req('GET',base()+'/dev.json',undefined,function(ok,d){err=!ok;if(ok){DEV=d||{};}render();});}
+function cfgOf(id){var d=DEV[id]||{},c=JSON.parse(JSON.stringify(d.cfg||{}));if(c.on===undefined)c.on=true;if(!c.goal)c.goal=15;if(!c.kinds)c.kinds={};c.free=c.free||'';c.lock=c.lock||'';c.until=c.until||0;return c;}
+function lockOf(c){return c.lock&&(!c.until||Date.now()<c.until)?c.lock:'';}
+function kindOf(id,c,n){var k=c.kinds[n];if(k==='study'||k==='play')return k;var st=(DEV[id]||{}).st||{};var s=st.study;if(s)return s.indexOf(n)>=0?'study':'play';var K=st.grade==='K';return (n==='math'||n==='english'||(K&&n==='hangul'))?'study':'play';}
+function send(id,f,msg){var c=cfgOf(id);f(c);c.t=Date.now();c.by='phone';DEV[id].cfg=c;render();
+  req('PUT',base()+'/dev/'+id+'/cfg.json',c,function(ok){toast(ok?(msg||'보냈어요'):'⚠️ 보내지 못했어요. 인터넷을 확인해요');if(!ok)load();});}
+function render(){
+  var h='<h1>📱 부모 리모컨</h1><div class="sub">우리 아이 놀이터 태블릿을 휴대폰에서 조절해요</div>';
+  if(!FB){app.innerHTML=h+'<div class="card">아직 온라인 저장소(Firebase)가 연결되지 않았어요.</div>';return;}
+  if(err&&!DEV){app.innerHTML=h+'<div class="card">⚠️ 연결하지 못했어요. 인터넷을 확인해 주세요.<button class="big" onclick="load()">다시 시도</button></div>';return;}
+  if(!DEV){app.innerHTML=h+'<div class="card">⏳ 불러오는 중…</div>';return;}
+  var ids=Object.keys(DEV).filter(function(id){return DEV[id]&&!DEV[id].bye;});
+  if(!ids.length&&!pairing)h+='<div class="card">아직 연결된 태블릿이 없어요.<br><span class="note">아래 <b>➕ 태블릿 연결</b>을 누르고, 태블릿의 🔐 부모 설정 → 📱 휴대폰 리모컨 → 연결하기에 번호를 넣어요.</span></div>';
+  ids.forEach(function(id){var d=DEV[id],st=d.st||{},c=cfgOf(id),L=lockOf(c),td=day(),cnt=st.day===td?st.cnt||0:0,goal=c.goal;
+    var pct=Math.min(100,Math.round(cnt/goal*100)),fresh=st.at&&Date.now()-st.at<90000;
+    h+='<div class="card"><div class="top"><span class="nm">'+(fresh?'🟢 ':'⚪ ')+esc(st.name||'태블릿')+'</span><span class="seen">'+ago(st.at)+(fresh&&st.page?'<br>'+esc(PN[st.page]||st.page)+' 하는 중':'')+'</span></div>';
+    h+='<div style="font-size:19px;margin-top:8px">📚 오늘 공부 <b>'+cnt+'</b> / '+goal+'개 '+(L?(L==='all'?'⛔ 모두 잠금':'🔒 놀이 잠금')+(c.until?' ('+hhmm(c.until)+'까지)':''):(c.free===td?'🎈 오늘 자유':(cnt>=goal||!c.on?'🎈 놀이 열림':'🔒 공부 중')))+'</div><div class="bar"><div style="width:'+pct+'%"></div></div>';
+    h+='<div style="font-size:18px;margin-top:10px">잠그기</div><div class="dur">'+[[0,'계속'],[30,'30분'],[60,'1시간'],[120,'2시간']].map(function(x){return '<button class="'+(P.dur===x[0]?'on':'off')+'" onclick="App.dur('+x[0]+')">'+x[1]+'</button>';}).join('')+'</div>'+
+      '<div class="locks"><button class="'+(L?'off':'on')+'" onclick="App.lock(\''+id+'\',\'\')">🔓 풀기</button><button class="'+(L==='play'?'red':'off')+'" onclick="App.lock(\''+id+'\',\'play\')">🔒 놀이</button><button class="'+(L==='all'?'red':'off')+'" onclick="App.lock(\''+id+'\',\'all\')">⛔ 모두</button></div>';
+    h+='<div class="row" style="margin-top:12px"><span>📚 공부 먼저 하기</span><button class="'+(c.on?'on':'off')+'" onclick="App.set(\''+id+'\',\'on\')">'+(c.on?'켬':'끔')+'</button></div>';
+    h+='<div class="row"><span>🎯 하루 목표</span><span><button class="off" onclick="App.goal(\''+id+'\',-1)">－</button> <b>'+goal+'개</b> <button class="off" onclick="App.goal(\''+id+'\',1)">＋</button></span></div>';
+    h+='<div class="row"><span>🎈 오늘만 자유 놀이</span><button class="'+(c.free===td?'on':'off')+'" onclick="App.set(\''+id+'\',\'free\')">'+(c.free===td?'켬':'끔')+'</button></div>';
+    h+='<div class="row"><span>✅ 오늘 한 개수 '+cnt+'개</span><button class="off" onclick="App.reset(\''+id+'\')">0으로</button></div>';
+    h+='<div style="font-size:18px;margin-top:10px">공부 / 놀이 <span class="note">눌러서 바꿔요</span></div><div class="games">';
+    GAMES.forEach(function(x){var k=kindOf(id,c,x[0]);h+='<button class="'+k+'" onclick="App.kind(\''+id+'\',\''+x[0]+'\')">'+(k==='study'?'📚 ':'🎈 ')+x[1]+'</button>';});
+    var synced=d.cfg&&st.ct>=d.cfg.t;
+    h+='</div><div class="st">'+(synced?'✅ 태블릿에 반영됐어요':'⏳ 태블릿이 인터넷에 연결돼 켜지면 반영돼요')+'</div>'+
+      '<button class="off big" style="font-size:16px" onclick="App.bye(\''+id+'\')">연결 끊기</button></div>';});
+  if(pairing){var left=Math.max(0,Math.round((pairing.x-Date.now())/1000));
+    h+='<div class="card" style="text-align:center"><div style="font-size:20px">태블릿에 이 번호를 넣어요</div><div class="code">'+pairing.n+'</div><div class="note">🔐 부모 설정 → 📱 휴대폰 리모컨 → 연결하기 · '+Math.floor(left/60)+':'+p2(left%60)+' 남음</div><button class="off big" onclick="App.pairEnd()">취소</button></div>';}
+  else h+='<button class="big" onclick="App.pair()">➕ 태블릿 연결</button>';
+  h+='<div class="card"><div style="font-size:18px">👨‍👩‍👧 다른 휴대폰에서도 쓰기</div><div class="note">이 주소를 엄마·아빠 휴대폰에서 열면 같은 태블릿을 조절할 수 있어요. 아이에게는 보여주지 마세요.</div><input id="lk" readonly value="'+location.origin+location.pathname+'#c='+P.fam+'"><button class="off big" style="font-size:17px" onclick="App.copy()">📋 주소 복사</button></div>';
+  app.innerHTML=h;
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+window.App={
+  dur:function(m){P.dur=m;save();render();},
+  lock:function(id,l){send(id,function(c){c.lock=l;c.until=l&&P.dur?Date.now()+P.dur*60000:0;},l?(l==='all'?'⛔ 모두 잠갔어요':'🔒 놀이를 잠갔어요'):'🔓 잠금을 풀었어요');},
+  set:function(id,k){var td=day();send(id,function(c){if(k==='free')c.free=c.free===td?'':td;else c[k]=!c[k];});},
+  goal:function(id,d){send(id,function(c){c.goal=d>0?Math.min(100,c.goal+(c.goal>=10?5:1)):Math.max(1,c.goal-(c.goal>10?5:1));});},
+  reset:function(id){send(id,function(c){c.reset=day();},'오늘 개수를 0으로 했어요');},
+  kind:function(id,n){var cur=kindOf(id,cfgOf(id),n);send(id,function(c){c.kinds[n]=cur==='study'?'play':'study';});},
+  bye:function(id){if(!confirm('이 태블릿 연결을 끊을까요?'))return;req('PUT',base()+'/dev/'+id+'.json',{bye:true},function(ok){toast(ok?'연결을 끊었어요':'⚠️ 실패');load();});},
+  pair:function(){var n=String(100000+Math.floor(Math.random()*900000)),x=Date.now()+600000;
+    req('PUT',FB+'/pair/'+n+'.json',{c:P.fam,x:x},function(ok){if(!ok){toast('⚠️ 번호를 만들지 못했어요. 다시 눌러요');return;}pairing={n:n,x:x,before:Object.keys(DEV||{}).filter(function(id){return DEV[id]&&!DEV[id].bye;}).length};render();});},
+  pairEnd:function(){if(pairing)req('DELETE',FB+'/pair/'+pairing.n+'.json');pairing=null;render();},
+  copy:function(){var i=document.getElementById('lk');i.select();try{document.execCommand('copy');toast('복사했어요');}catch(e){}}
+};
+window.load=load;
+function tick(){if(document.hidden)return;load();if(pairing){if(Date.now()>pairing.x){App.pairEnd();return;}
+  var n=Object.keys(DEV||{}).filter(function(id){return DEV[id]&&!DEV[id].bye;}).length;if(n>pairing.before){pairing=null;toast('✅ 태블릿이 연결됐어요');}}}
+render();load();setInterval(tick,pairing?3000:5000);document.addEventListener('visibilitychange',function(){if(!document.hidden)load();});
+</script>
+</body>
+</html>
