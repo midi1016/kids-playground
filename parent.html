@@ -42,7 +42,7 @@ input{width:100%;font-size:14px;padding:8px;border-radius:10px;border:2px solid 
 <script>
 'use strict';
 var FB='';try{FB=localStorage.getItem('kidsFB')||FB;}catch(e){}
-var GAMES=[['math','수학'],['hangul','한글'],['english','영어'],['robot','로봇 코딩'],['coding','코딩 공방'],['compose','작곡'],['sudoku','스도쿠'],['clock','시계'],['puzzle','퍼즐'],['maze','미로'],['hidden','숨은그림'],['memory','짝 맞추기'],['hospital','동물 병원'],['coloring','색칠'],['piano','건반']];
+var GAMES=[['math','수학'],['hangul','한글'],['english','영어'],['robot','로봇 코딩'],['coding','코딩 공방'],['compose','작곡'],['paint','그림 그리기'],['sudoku','스도쿠'],['clock','시계'],['puzzle','퍼즐'],['maze','미로'],['hidden','숨은그림'],['memory','짝 맞추기'],['hospital','동물 병원'],['coloring','색칠'],['piano','건반']];
 var PN={index:'놀이터 첫 화면'};GAMES.forEach(function(x){PN[x[0]]=x[1];});
 var KEY='kidsParent.v1',P={fam:'',dur:0};
 try{var o=JSON.parse(localStorage.getItem(KEY)||'{}');for(var k in o)P[k]=o[k];}catch(e){}
