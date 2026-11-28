@@ -163,7 +163,7 @@ function per(){return window.innerWidth>window.innerHeight?4:2;} // 한 화면 �
 function pages(){return Math.ceil(S.bars/per());}
 function rEdit(){
   var h='<div class="top"><button class="pill" onclick="App.home()">◀</button><button class="pill" onclick="App.rename()">✏️ '+esc(S.name)+'</button><span class="grow"></span>'+
-    '<button class="pill go" id="pl" onclick="App.play()">▶ 재생</button>'+
+    '<button class="pill" style="background:#7048e8;color:#fff;box-shadow:0 4px 0 #5f3dc4;font-size:21px" onclick="App.helper()">🪄 도우미</button><button class="pill go" id="pl" onclick="App.play()">▶ 재생</button>'+
     '<span class="pill">빠르기 <button onclick="App.bpm(-10)" style="font-size:22px;padding:0 6px">－</button><b id="bpm">'+S.bpm+'</b><button onclick="App.bpm(10)" style="font-size:22px;padding:0 6px">＋</button></span>'+
     '<button class="pill" onclick="App.bars()">📏 '+S.bars+'마디</button><button class="pill" onclick="App.undo()">↩️</button><button class="pill" onclick="App.wav()">💾 소리 파일</button></div>';
   h+='<div class="tabs">';[['mel','🎹 멜로디'],['acc','🎸 반주'],['drum','🥁 드럼'],['chord','🎼 코드 반주']].forEach(function(x){var tr=S[x[0]];h+='<button class="tab'+(V.tab===x[0]?' on':'')+'" onclick="App.tab(\''+x[0]+'\')">'+x[1]+'<span class="mu" onclick="event.stopPropagation();App.mute(\''+x[0]+'\')">'+(tr.mute?'🔇':'🔊')+'</span></button>';});h+='</div>';
@@ -260,7 +260,68 @@ function askName(cur,cb){var o=document.createElement('div');o.className='overla
   document.body.appendChild(o);var i=o.querySelector('#nm');o.querySelector('#ok').onclick=function(){var v=i.value.trim()||cur;o.remove();cb(v);};o.querySelector('#cn').onclick=function(){o.remove();};}
 function confirmBox(m,yes){var o=document.createElement('div');o.className='overlay';o.innerHTML='<div class="panel"><div style="font-size:24px;word-break:keep-all">'+m+'</div><button class="btn" id="ok">네</button><button class="btn ghost" id="cn">아니요</button></div>';document.body.appendChild(o);o.querySelector('#ok').onclick=function(){o.remove();yes();};o.querySelector('#cn').onclick=function(){o.remove();};}
 function nextName(){var n=1;while(D.songs.some(function(s){return s.name==='내 노래 '+n;}))n++;return '내 노래 '+n;}
+// ===== 🪄 작곡 도우미 =====
+var SCALE=[0,2,4,5,7,9,11],CCAND=['C','F','G','Am','Dm','Em'];
+function barNotes(s,b){var a=b*8,e=a+8,out=[];s.mel.n.forEach(function(n){var o=Math.min(e,n[0]+n[2])-Math.max(a,n[0]);if(o>0)out.push({pc:n[1]%12,w:o*((n[0]===a||n[0]===a+4)?1.5:1)});});return out;}
+function cScore(c,ns){var pcs=CH[c].map(function(m){return m%12;}),s=0;ns.forEach(function(n){s+=pcs.indexOf(n.pc)>=0?n.w:-0.4*n.w;});return s;}
+var TPL={fit:['C','G','Am','F'],bright:['C','F','G','C'],soft:['C','Am','F','G']};
+var GOOD={'C>Am':1,'Am>F':1,'F>G':1,'G>C':1,'C>F':1,'Dm>G':1,'Em>Am':1,'F>C':0.6,'G>Am':0.8,'Am>Dm':0.8,'C>G':0.6,'F>Dm':0.5,'G7>C':1,'G>G7':0.5,'Em>F':0.6};
+function progs(s){var n=s.bars,ns=[],b;for(b=0;b<n;b++)ns.push(barNotes(s,b));
+  function best(b,list,tpl){if(!ns[b].length)return tpl[b%4];var bs=null,bv=-1e9;list.forEach(function(c){var v=cScore(c,ns[b]);if(v>bv+1e-9){bv=v;bs=c;}});return bs;}
+  var fit=[],bright=[];for(b=0;b<n;b++){fit.push(best(b,CCAND,TPL.fit));bright.push(best(b,['C','F','G'],TPL.bright));}
+  var L=n-1;if(cScore('C',ns[L])>=cScore(fit[L],ns[L])-1||!ns[L].length)fit[L]='C';bright[L]='C';if(n>=2&&bright[L-1]==='G'&&cScore('G7',ns[L-1])>=cScore('G',ns[L-1]))bright[L-1]='G7';
+  // 부드럽게: 앞 코드와 잘 이어지는 것에 점수를 더 줌
+  var soft=[],prev='';for(b=0;b<n;b++){var bs=null,bv=-1e9;CCAND.forEach(function(c){var v=(ns[b].length?cScore(c,ns[b]):(c===TPL.soft[b%4]?2:0))+(GOOD[prev+'>'+c]||0)*1.2+(c.length>1?0.35:0);if(v>bv){bv=v;bs=c;}});soft.push(bs);prev=bs;}
+  if(!ns[L].length||cScore('C',ns[L])>=cScore(soft[L],ns[L])-1.5)soft[L]='C';
+  var out=[{k:'fit',t:'🎯 멜로디에 딱 맞게',c:fit},{k:'bright',t:'🌞 밝고 씩씩하게',c:bright},{k:'soft',t:'🌙 부드럽고 예쁘게',c:soft}],seen={};
+  return out.filter(function(o){var k=o.c.join();if(seen[k])return false;seen[k]=1;return true;});}
+var RHY=[{t:'🐢 조용하게',d:'쿵 … 칙 …',f:function(b){return {k:[b],s:[],h:[b+4],c:[]};}},{t:'🙂 기본 박자',d:'쿵 칙 짝 칙',f:function(b){return {k:[b,b+4],s:[b+4],h:[b+2,b+6],c:[]};}},
+  {t:'🎉 신나게',d:'칙칙칙칙 + 박수',f:function(b,last){return {k:[b,b+3,b+4],s:[b+2,b+6],h:[b,b+1,b+2,b+3,b+4,b+5,b+6,b+7],c:last?[b+6,b+7]:[]};}},{t:'🥁 행진',d:'쿵쿵 짝!',f:function(b){return {k:[b,b+2,b+4],s:[b+6],h:[],c:[b+6]};}}];
+function rhythmOf(s,i){var h={k:[],s:[],h:[],c:[]};for(var b=0;b<s.bars;b++){var r=RHY[i].f(b*8,b===s.bars-1);for(var k in r)h[k]=h[k].concat(r[k]);}return h;}
+function third(m){var pc=m%12,i=SCALE.indexOf(pc);if(i<0)return null;var j=i-2,oct=Math.floor(m/12);if(j<0){j+=7;oct--;}return oct*12+SCALE[j];}
+function chordsOr(s){var c=s.chord.c.slice(0,s.bars),has=c.some(function(x){return x;});if(has)return c.map(function(x,b){return x||'C';});return progs(s)[0].c;}
+function harms(s){var out=[];
+  var h3=[];s.mel.n.forEach(function(n){var t=third(n[1]);if(t!=null)h3.push([n[0],t,n[2]]);});if(h3.length)out.push({t:'🎶 화음 노래 (3도 아래)',d:'멜로디와 함께 부르는 두 번째 목소리',ins:'piano',n:h3});
+  var cs=chordsOr(s),bl=[],wz=[];cs.forEach(function(c,b){var r=CH[c][0]-24;bl.push([b*8,r,4],[b*8+4,r+(b%2?7:0),4]);wz.push([b*8,r,2],[b*8+2,CH[c][1]-24,2],[b*8+4,CH[c][2]-24,2],[b*8+6,CH[c][1]-24,2]);});
+  out.push({t:'🔈 둥둥 베이스',d:'코드의 뿌리 음을 낮게 쳐요 ('+cs.slice(0,4).join(' ')+'…)',ins:'bass',n:bl});out.push({t:'🎸 걷는 베이스',d:'코드 음을 하나씩 걸어가요',ins:'bass',n:wz});return out;}
+var MRH=[[2,2,2,2],[2,2,4],[4,2,2],[1,1,2,4],[2,1,1,4],[4,4],[2,2,2,1,1]];
+function melBar(s){var b0=V.page*per(),b;for(b=0;b<s.bars;b++){if(b<b0)continue;if(!barNotes(s,b).length)return b;}for(b=0;b<s.bars;b++)if(!barNotes(s,b).length)return b;return -1;}
+var MROW=[60,62,64,65,67,69,71,72,74,76,77,79,81,83,84];
+function melOpts(s){var b=melBar(s);if(b<0)return {b:-1,o:[]};var cs=chordsOr(s),c=cs[b]||'C',pcs=CH[c].map(function(m){return m%12;}),last=67;
+  var prevEnd=-1;s.mel.n.forEach(function(n){if(n[0]<b*8&&n[0]>prevEnd){prevEnd=n[0];last=n[1];}});
+  var o=[],tries=0,seen={};while(o.length<3&&tries++<60){var rh=MRH[R(0,MRH.length-1)],p=MROW.indexOf(last);if(p<0)p=4;var ns=[],st=b*8;
+    rh.forEach(function(len,i){var cand=[];for(var d=-2;d<=2;d++){var q=p+d;if(q<0||q>=MROW.length)continue;var m=MROW[q],ok=pcs.indexOf(m%12)>=0;if(i===0||i===rh.length-1){if(ok)cand.push(q);}else cand.push(q);}if(!cand.length)cand=[p];p=cand[R(0,cand.length-1)];ns.push([st,MROW[p],len]);st+=len;});
+    var key=ns.map(function(n){return n[1]+':'+n[2];}).join();if(seen[key])continue;seen[key]=1;o.push({t:'✨ 멜로디 '+(o.length+1),d:ns.map(function(n){return nName(n[1]);}).join(' '),n:ns});}
+  return {b:b,c:c,o:o};}
+var HP=null;
+function helper(t){stop();HP={tab:t||HP&&HP.tab||'chord',playing:-1};if(HP.tab==='mel')HP.mel=melOpts(S);hRender();say('들어 보고 마음에 드는 걸 골라요');}
+function say(x){try{if(window.kidsSpeak)kidsSpeak(x,0.95);}catch(e){}}
+function hOpts(){var t=HP.tab;
+  if(t==='chord')return progs(S).map(function(p){return {t:p.t,d:p.c.join(' · '),ap:function(s){s.chord.c=p.c.slice();s.chord.mute=false;}};});
+  if(t==='style'){var cs=chordsOr(S);return Object.keys(STY).map(function(k){return {t:{long:'🌊 길게 울리기',beat:'💃 쿵짝 쿵짝',arp:'🎠 하나씩 펼쳐서'}[k],d:'코드 '+cs.slice(0,4).join(' ')+'… 를 '+STY[k],ap:function(s){s.chord.sty=k;s.chord.mute=false;if(!s.chord.c.some(function(x){return x;}))s.chord.c=cs.slice();}};});}
+  if(t==='drum')return RHY.map(function(r,i){return {t:r.t,d:r.d,ap:function(s){s.drum.h=rhythmOf(s,i);s.drum.mute=false;}};});
+  if(t==='harm')return harms(S).map(function(h){return {t:h.t,d:h.d,ap:function(s){s.acc.n=h.n.map(function(x){return x.slice();});s.acc.ins=h.ins;s.acc.mute=false;}};});
+  var M=HP.mel;if(!M||M.b<0)return [];return M.o.map(function(m){return {t:m.t,d:m.d,ap:function(s){s.mel.n=s.mel.n.filter(function(n){return n[0]<M.b*8||n[0]>=M.b*8+8;}).concat(m.n.map(function(x){return x.slice();}));s.mel.mute=false;},from:Math.max(0,M.b-1)*8,to:(M.b+1)*8};});}
+function hRender(){var o=document.getElementById('hp');if(!o){o=document.createElement('div');o.id='hp';o.className='overlay';o.style.alignItems='flex-end';document.body.appendChild(o);}
+  var t=HP.tab,ops=hOpts(),h='<div class="panel" style="max-width:820px;text-align:left;max-height:88vh;overflow-y:auto"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:28px">🪄 작곡 도우미</span><span class="grow"></span><button class="chip" onclick="App.hClose()">✖ 닫기</button></div>'+
+    '<div style="color:var(--sub);font-size:17px;margin:4px 0 8px">▶ 들어 보고 마음에 들면 ✅ 이걸로! (↩️로 언제든 되돌려요)</div><div class="opts" style="margin-bottom:10px">';
+  [['chord','🎼 코드 진행'],['style','🎹 반주 모양'],['drum','🥁 리듬'],['harm','🎶 화음·베이스'],['mel','✨ 멜로디 이어 쓰기']].forEach(function(x){h+='<button class="chip'+(t===x[0]?' on':'')+'" style="font-size:19px" onclick="App.helper(\''+x[0]+'\')">'+x[1]+'</button>';});h+='</div>';
+  if(t==='mel'){var M=HP.mel;h+='<div style="font-size:18px;margin-bottom:6px">'+(M.b<0?'빈 마디가 없어요. 📏 마디를 늘리거나 지우고 해 봐요':'<b>'+(M.b+1)+'마디</b>에 이어 쓸 멜로디예요 (코드 '+M.c+') <button class="chip" onclick="App.helper(\'mel\')">🔄 다른 걸로</button>')+'</div>';}
+  if(t==='harm'&&!S.mel.n.length)h+='<div style="font-size:17px;color:#e8590c;margin-bottom:6px">💡 멜로디가 있으면 화음 노래도 만들어 줘요</div>';
+  if(t==='harm')h+='<div style="font-size:16px;color:var(--sub);margin-bottom:6px">고르면 🎸 반주 트랙에 들어가요 (원래 반주는 바뀌어요)</div>';
+  ops.forEach(function(op,i){h+='<div style="display:flex;align-items:center;gap:10px;background:#fff9f2;border-radius:16px;padding:10px 12px;margin-bottom:8px;box-shadow:0 3px 0 var(--line)"><div style="flex:1;min-width:0"><div style="font-size:22px">'+op.t+'</div><div style="font-size:16px;color:var(--sub);word-break:keep-all">'+esc(op.d)+'</div></div>'+
+    '<button class="pill'+(HP.playing===i?' stop':'')+'" style="'+(HP.playing===i?'background:#fa5252;color:#fff':'')+'" onclick="App.hPlay('+i+')">'+(HP.playing===i?'■ 멈춤':'▶ 들어 보기')+'</button><button class="pill go" style="font-size:19px" onclick="App.hPick('+i+')">✅ 이걸로</button></div>';});
+  o.innerHTML=h+'</div>';}
+var HPLAY=null;
+function hStopPlay(){if(HPLAY){try{HPLAY.g.gain.setValueAtTime(0.0001,actx.currentTime);HPLAY.g.disconnect();}catch(e){}clearTimeout(HPLAY.tm);HPLAY=null;}if(HP)HP.playing=-1;}
+function hPlay(i){var was=HP.playing===i;hStopPlay();if(was){hRender();return;}var op=hOpts()[i];if(!op)return;var c=ac();if(!c)return;var tmp=JSON.parse(JSON.stringify(S));op.ap(tmp);
+  var from=op.from!=null?op.from:0,to=op.to!=null?op.to:Math.min(tmp.bars,8)*8;tmp.bars=Math.ceil(to/8);var ev=events(tmp,from);if(!ev.length){toast('들려줄 음이 없어요');return;}
+  var g=c.createGain();g.gain.value=0.9;g.connect(c.destination);render(c,g,ev,c.currentTime+0.06);HP.playing=i;HPLAY={g:g,tm:setTimeout(function(){hStopPlay();if(document.getElementById('hp'))hRender();},((to-from)*60/tmp.bpm/2+0.8)*1000)};hRender();}
+function hPick(i){var op=hOpts()[i];if(!op)return;hStopPlay();snap();op.ap(S);touch();var hp=document.getElementById('hp');if(hp)hp.remove();
+  var nt={chord:'chord',style:'chord',drum:'drum',harm:'acc',mel:'mel'}[HP.tab];V.tab=nt;if(HP.tab==='mel')V.page=Math.floor(HP.mel.b/per());HP=null;rEdit();toast('✅ 넣었어요! ▶ 재생해 봐요');}
+function hClose(){hStopPlay();var hp=document.getElementById('hp');if(hp)hp.remove();HP=null;}
 window.App={
+  helper:helper,hPlay:hPlay,hPick:hPick,hClose:hClose,
   new:function(){openSong(newSong(nextName()));},demo:function(){var s=demoSong();s.name='작은 별 '+(D.songs.length+1);openSong(s);store();},
   open:function(id){var s=D.songs.filter(function(x){return x.id===id;})[0];if(s)openSong(JSON.parse(JSON.stringify(s)));},
   dup:function(id){var s=D.songs.filter(function(x){return x.id===id;})[0];if(!s)return;var c=JSON.parse(JSON.stringify(s));c.id='s'+Date.now().toString(36);c.name=s.name+' 복사';c.t=Date.now();D.songs.push(c);save();rHome();},
@@ -278,7 +339,7 @@ window.App={
     var nb=V.selBar+1;V.selBar=nb<S.bars&&nb<(V.page+1)*per()?nb:-1;touch();rChords();},
   pg:function(d){var np=V.page+d;if(np<0||np>=pages())return;V.page=np;stop();rEdit();},copy:copyPage,paste:pastePage,
   clearPage:function(){confirmBox('지금 보이는 마디의 음을 모두 지울까요?',function(){snap();clearRange();touch();rEdit();});}};
-window.__T={S:function(){return S;},V:function(){return V;},D:function(){return D;},events:events,toWav:toWav};
+window.__T={progs:progs,HP:function(){return HP;},hOpts:function(){return hOpts();},S:function(){return S;},V:function(){return V;},D:function(){return D;},events:events,toWav:toWav};
 window.addEventListener('resize',function(){if(scr==='edit'){var w=per();if(V._per&&V._per!==w)V.page=Math.floor(V.page*V._per/w);V._per=w;rEdit();}});
 window.addEventListener('pagehide',function(){if(scr==='edit')store();});
 go('home');
