@@ -382,7 +382,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
 var NAME='',GRADE='K';try{var HB=JSON.parse(localStorage.getItem('kidsHub.v1')||'null');if(HB&&HB.profiles){var PF=HB.profiles.filter(function(x){return x.id===HB.cur;})[0]||HB.profiles[0];if(PF){NAME=PF.name;GRADE=PF.grade||'K';}}}catch(e){}
 var SIZES=[4,6,9,12,16,25,36,49],GRID={4:[2,2],6:[3,2],9:[3,3],12:[4,3],16:[4,4],25:[5,5],36:[6,6],49:[7,7]};
 if(D.theme==null)D.theme=PICS[D.pic]?PICS[D.pic].t:0;
-if(!D.size)D.size={K:6,'1':9,'2':12,'3':16}[GRADE]||6;
+if(!D.size)D.size={K:6,'1':9,'2':12,'3':16,'4':25,'5':36,'6':49}[GRADE]||6;
 var SGRID={'32':[3,2],'33':[3,3],'44':[4,4],'55':[5,5]},SSTAR={'32':[20,40],'33':[60,120],'44':[150,300],'55':[320,600]},SMIX={'32':16,'33':34,'44':80,'55':150};
 
 // ---------- 소리·읽어주기 ----------

@@ -113,7 +113,7 @@ var D={best:{},solved:0,lv:-1,set:0,voice:true,sfx:true};
 try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);for(var k in o)D[k]=o[k];}}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
 var NAME='',GRADE='K';try{var HB=JSON.parse(localStorage.getItem('kidsHub.v1')||'null');if(HB&&HB.profiles){var PF=HB.profiles.filter(function(x){return x.id===HB.cur;})[0]||HB.profiles[0];if(PF){NAME=PF.name;GRADE=PF.grade||'K';}}}catch(e){}
-if(D.lv<0)D.lv={K:0,'1':1,'2':3,'3':4}[GRADE]||0;
+if(D.lv<0)D.lv={K:0,'1':1,'2':3,'3':4,'4':4,'5':5,'6':5}[GRADE]||0;
 
 // ---------- 판 만들기 ----------
 function boxOf(L,r,c){return Math.floor(r/L.br)*L.br+Math.floor(c/L.bc);}

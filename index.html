@@ -84,7 +84,7 @@ function today(){var d=new Date();return d.getFullYear()+'-'+pad2(d.getMonth()+1
 function hasB(w){var c=w.charCodeAt(w.length-1);if(c<0xAC00||c>0xD7A3)return false;return (c-0xAC00)%28!==0;}
 function sum(o){var s=0;for(var k in o)s+=o[k]||0;return s;}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-var GRN={K:'유치원','1':'1학년','2':'2학년','3':'3학년'},FACE=['🐣','🐥','🐻','🐰','🦊'];
+var GRN={K:'유치원','1':'1학년','2':'2학년','3':'3학년','4':'4학년','5':'5학년','6':'6학년'},FACE=['🐣','🐥','🐻','🐰','🦊'];
 function hub(){var H=get('kidsHub.v1');if(!H||!H.profiles||!H.profiles.length){var M0=get('kidsMath.v1')||{},nm=(M0.settings&&M0.settings.name)||'';H={profiles:nm?[{id:'p1',name:nm,grade:'2'}]:[],cur:'p1'};if(nm)put('kidsHub.v1',H);}return H;}
 function curProf(H){return H.profiles.filter(function(x){return x.id===H.cur;})[0]||H.profiles[0];}
 function mathKey(id){return id==='p1'?'kidsMath.v1':'kidsMath.v1.'+id;}
@@ -236,7 +236,7 @@ function editProf(isNew){
   var H=hub(),P=isNew?null:curProf(H),g=P?P.grade:(H.profiles.length?'K':'2');
   var o=document.createElement('div');o.className='overlay';
   function draw(){o.innerHTML='<div class="panel"><div style="font-size:56px">'+(isNew?'👋':'✏️')+'</div><div style="font-size:26px">'+(isNew?'놀이터에 올 아이를 알려 주세요':'이름·학년 바꾸기')+'</div><input id="nm" maxlength="8" value="'+esc(P?P.name:(o.nm||''))+'" placeholder="이름 (예: 하늘)"><div style="font-size:18px;color:#8a7a70;margin:4px 0 8px">수학 문제 학년</div><div class="grs">'+
-    ['K','1','2','3'].map(function(k){return '<button class="gr'+(g===k?' on':'')+'" data-g="'+k+'">'+GRN[k]+'</button>';}).join('')+'</div><button id="ok">좋아요</button>'+(H.profiles.length||!isNew?'<button id="cx" class="cx">취소</button>':'')+(!isNew?'<button id="addk" class="cx" style="font-size:16px!important">＋ 다른 아이 추가하기</button>':'')+'</div>';
+    ['K','1','2','3','4','5','6'].map(function(k){return '<button class="gr'+(g===k?' on':'')+'" data-g="'+k+'">'+GRN[k]+'</button>';}).join('')+'</div><button id="ok">좋아요</button>'+(H.profiles.length||!isNew?'<button id="cx" class="cx">취소</button>':'')+(!isNew?'<button id="addk" class="cx" style="font-size:16px!important">＋ 다른 아이 추가하기</button>':'')+'</div>';
     Array.prototype.forEach.call(o.querySelectorAll('.gr'),function(b){b.onclick=function(){o.nm=o.querySelector('#nm').value;if(P)P.name=o.nm;g=b.getAttribute('data-g');draw();};});
     var cx=o.querySelector('#cx');if(cx)cx.onclick=function(){o.remove();};
     var ak=o.querySelector('#addk');if(ak)ak.onclick=function(){o.remove();editProf(true);};

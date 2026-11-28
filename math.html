@@ -73,6 +73,8 @@ button{border:0;cursor:pointer;touch-action:manipulation;background:none}
 .box{display:inline-block;min-width:1.5em;border:3px dashed var(--orange);border-radius:12px;color:var(--orange);text-align:center;line-height:1.15;padding:0 .12em;background:#fffaf2}
 .answer-disp{font-size:46px;min-height:74px;border-radius:18px;background:#fff4e0;text-align:center;padding:6px;margin:10px auto 12px;max-width:300px;border:3px solid #ffd59e;letter-spacing:2px}
 .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:420px;margin:0 auto}
+.pad .xk{grid-column:1/-1;font-size:28px;background:#fff4e0}
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 4px}.fr span:first-child{border-bottom:3px solid currentColor;padding:0 4px}
 .pad button{font-size:36px;padding:14px 0;border-radius:18px;background:#fff;box-shadow:0 5px 0 #e5d8c8;border:2px solid var(--line)}
 .pad .ok{background:var(--green);color:#fff;box-shadow:0 5px 0 var(--green-d);border-color:var(--green)}
 .pad .del{background:#ffeaea;border-color:#ffd3d3}
@@ -394,14 +396,145 @@ G.error=function(lv){
     choices:['⭕ 맞아요','❌ 틀렸어요'],answer:okAns?'⭕ 맞아요':'❌ 틀렸어요',hint:'직접 계산해 보고 곰돌이 답과 비교해 봐요',
     fix:okAns?null:String(right),explain:okAns?'곰돌이가 맞게 풀었어요! '+expr+' = '+right:why+'<br>바른 답: '+expr+' = '+right};
 };
+// ===== 4~6학년 (lv 5~8) =====
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){var t=a%b;a=b;b=t;}return a;}
+function lcm(a,b){return a/gcd(a,b)*b;}
+function FR(n,d){return '<span class="fr"><span>'+n+'</span><span>'+d+'</span></span>';}
+function simp(n,d){var g=gcd(n,d);return [n/g,d/g];}
+function com(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function RN(a,b){var x;do{x=R(a,b);}while(x%10===0);return x;}
+function pl(h){return strip(String(h).replace(/<span class="fr"><span>(\d+)<\/span><span>(\d+)<\/span><\/span>/g,' $1/$2 ').replace(/<text[^>]*>([^<]*)<\/text>/g,' $1 ')).replace(/\s+/g,' ').trim();}
+function dfmt(n,pl){var s=(n/Math.pow(10,pl)).toFixed(pl);if(s.indexOf('.')>=0)s=s.replace(/0+$/,'').replace(/\.$/,'');return s;}
+function parseFr(v){v=String(v);if(/^\d+$/.test(v))return [+v,1];var m=v.match(/^(\d+)\/(\d+)$/);if(!m||+m[2]===0)return null;return [+m[1],+m[2]];}
+// 분수 답: 값이 같고, simplest면 기약분수여야 정답
+function chkAns(c,v){v=String(v);if(c.t==='fr'){var f=parseFr(v);if(!f)return false;if(f[0]*c.d!==c.n*f[1])return false;return !c.s||gcd(f[0],f[1])===1||f[1]===1;}
+  if(c.t==='dec'){if(!/^\d*\.?\d+$|^\d+\.$/.test(v))return false;return Math.abs(parseFloat(v)-parseFloat(c.a))<1e-9;}return false;}
+function frQ(html,n,d,hint,explain,simplest){var s=simp(n,d),a=s[1]===1?String(s[0]):s[0]+'/'+s[1];
+  return {mode:'num',pad:'frac',html:html,plain:pl(html),answer:a,chk:{t:'fr',n:n,d:d,s:simplest!==false},hint:hint+(simplest!==false?' (답은 기약분수로, 예: 3/4)':' (예: 3/4)'),explain:explain};}
+function decQ(html,ans,hint,explain){return {mode:'num',pad:'dec',html:html,plain:pl(html),answer:ans,chk:{t:'dec',a:ans},hint:hint,explain:explain};}
+function numQ(html,ans,hint,explain){return {mode:'num',html:html,plain:pl(html),answer:String(ans),hint:hint,explain:explain};}
+function choiceQ(html,ans,others,hint,explain){var u=[];others.map(String).forEach(function(o){if(o!==String(ans)&&u.indexOf(o)<0)u.push(o);});var ch=shuffle([String(ans)].concat(u));return {mode:'choice',html:html,plain:pl(html),answer:String(ans),choices:ch,hint:hint,explain:explain};}
+var KD=['','일','이','삼','사','오','육','칠','팔','구'];
+function kor4(n){var u=['천','백','십',''],s='',d=String(n);while(d.length<4)d='0'+d;for(var i=0;i<4;i++){var c=+d[i];if(!c)continue;s+=(c===1&&i<3?'':KD[c])+u[i];}return s;}
+function korNum(n){var parts=[[Math.floor(n/100000000)%10000,'억'],[Math.floor(n/10000)%10000,'만'],[n%10000,'']],s=[];parts.forEach(function(p){if(p[0])s.push(kor4(p[0])+p[1]);});return s.join(' ')||'영';}
+function svg(w,h,body){return '<div style="text-align:center"><svg viewBox="0 0 '+w+' '+h+'" style="width:min(100%,'+(w*1.3)+'px);max-height:34vh" font-family="Jua,sans-serif" font-size="16">'+body+'</svg></div>';}
+function lab(x,y,t,a){return '<text x="'+x+'" y="'+y+'" text-anchor="'+(a||'middle')+'" fill="#e8590c">'+t+'</text>';}
+var SH='fill="#fff4e0" stroke="#3b2f2a" stroke-width="2.5"';
+
+G.bignum=function(lv){
+  var t=pick(lv<=5?['place','read','mul']:lv===6?['mul','div','div','place']:lv===7?['mix','div','mix']:['mix','mix2','mix2']);
+  if(t==='place'){var n=R(1,9)*10000000+R(0,9999999),s=String(n),k=R(0,4),dg=+s[k];while(!dg){k=R(0,4);dg=+s[k];}var val=dg*Math.pow(10,s.length-1-k);
+    var others=[val*10,val/10,val*100].filter(function(x){return x>=1&&x%1===0;});
+    return choiceQ(P('<b>'+com(n)+'</b>에서 앞에서 '+(k+1)+'번째 숫자 <b>'+dg+'</b>가 나타내는 값은?'),com(val),others.slice(0,3).map(com),'자리를 오른쪽부터 일·십·백·천·만… 으로 세어 봐요',com(n)+'의 앞에서 '+(k+1)+'번째 숫자 '+dg+'는 '+korNum(val)+' = '+com(val));}
+  if(t==='read'){var n2=R(1,9)*Math.pow(10,R(6,8))+R(1,99)*Math.pow(10,R(4,5));var w=[n2+Math.pow(10,R(4,6)),n2*10,Math.round(n2/10)];
+    return choiceQ(P('<b>'+korNum(n2)+'</b>을(를) 숫자로 쓰면?'),com(n2),w.map(com),'억·만 단위로 끊어서 네 자리씩 써 봐요',korNum(n2)+' = '+com(n2));}
+  if(t==='mul'){var a=R(120,899),b=R(12,49);return numQ(P('곱셈을 해요')+eq(a+' × '+b+' = '+BOX),a*b,a+' × '+(b%10)+' 과 '+a+' × '+(b-b%10)+'을 따로 구해서 더해요',a+' × '+b+' = '+a+' × '+(b%10)+' + '+a+' × '+(b-b%10)+' = '+a*(b%10)+' + '+a*(b-b%10)+' = '+a*b);}
+  if(t==='div'){var d=R(12,39),q=R(5,29),r=R(1,d-1),n3=d*q+r,askQ=Math.random()<0.5;
+    var html=P('나눗셈의 '+(askQ?'몫':'나머지')+'을 구해요')+eq(n3+' ÷ '+d+' = '+(askQ?BOX:q)+' … '+(askQ?r:BOX));
+    return numQ(html,askQ?q:r,d+' × 몇이 '+n3+'에 가장 가까운지 어림해 봐요 ('+d+' × '+(Math.round(q/5)*5||5)+' = '+d*(Math.round(q/5)*5||5)+')',n3+' ÷ '+d+' = '+q+' … '+r+'  ('+d+' × '+q+' + '+r+' = '+n3+')');}
+  if(t==='mix'){var a1=R(10,60),b1=R(2,9),c1=R(2,9),d1=R(1,Math.min(20,a1)),form=R(0,2),ex,v,how;
+    if(form===0){ex=a1+' + '+b1+' × '+c1+' − '+d1;v=a1+b1*c1-d1;how='곱셈 먼저: '+b1+' × '+c1+' = '+b1*c1+', 그다음 '+a1+' + '+b1*c1+' − '+d1+' = '+v;}
+    else if(form===1){var c2=b1*c1;ex=a1+' − '+c2+' ÷ '+b1+' + '+d1;v=a1-c1+d1;how='나눗셈 먼저: '+c2+' ÷ '+b1+' = '+c1+', 그다음 '+a1+' − '+c1+' + '+d1+' = '+v;}
+    else{ex='('+a1+' + '+d1+') × '+b1;v=(a1+d1)*b1;how='괄호 먼저: '+a1+' + '+d1+' = '+(a1+d1)+', 그다음 × '+b1+' = '+v;}
+    return numQ(P('계산 순서를 지켜요!')+eq(ex+' = '+BOX),v,'괄호 → 곱셈·나눗셈 → 덧셈·뺄셈 순서예요',how);}
+  var b2=R(2,9),c3=R(2,9),a2=b2*c3*R(2,4),e2=R(2,6),f2=R(10,40),v2;
+  var ex2=f2+' + '+a2+' ÷ ('+b2+' × '+c3+') × '+e2;v2=f2+a2/(b2*c3)*e2;
+  return numQ(P('계산 순서를 지켜요!')+eq(ex2+' = '+BOX),v2,'괄호 안을 먼저, 그다음 ÷와 ×를 왼쪽부터 차례로',''+b2+' × '+c3+' = '+b2*c3+' → '+a2+' ÷ '+b2*c3+' = '+a2/(b2*c3)+' → × '+e2+' = '+a2/(b2*c3)*e2+' → '+f2+' + '+a2/(b2*c3)*e2+' = '+v2);
+};
+G.frac=function(lv){
+  var t=pick(lv<=5?['same','same','mixed']:lv===6?['reduce','add','cmp','sub']:lv===7?['mulN','mulF','add']:['divN','divF','mulF']);
+  if(t==='same'){var d=R(5,12),a=R(1,d-2),b=R(1,d-1-a),plus=Math.random()<0.6;if(!plus){var hi=a+b;b=a;a=hi;}
+    var r=plus?a+b:a-b;return frQ(P('분모가 같은 분수 '+(plus?'덧셈':'뺄셈'))+eq(FR(a,d)+(plus?' + ':' − ')+FR(b,d)+' = '+BOX),r,d,'분모는 그대로, 분자끼리 '+(plus?'더해요':'빼요'),a+'/'+d+(plus?' + ':' − ')+b+'/'+d+' = '+r+'/'+d,false);}
+  if(t==='mixed'){var d2=R(3,9),w=R(1,4),n=R(1,d2-1),imp=w*d2+n;
+    return choiceQ(P('대분수 '+w+' '+n+'/'+d2+'를 가분수로 바꾸면?')+eq(w+FR(n,d2)),imp+'/'+d2,[(w+n)+'/'+d2,(w*n+d2)+'/'+d2,(imp+1)+'/'+d2],'자연수 '+w+'는 '+d2+'/'+d2+'가 '+w+'개예요',w+' '+n+'/'+d2+' = '+(w*d2)+'/'+d2+' + '+n+'/'+d2+' = '+imp+'/'+d2);}
+  if(t==='reduce'){var a3=R(1,6),b3=R(a3+1,9),k=R(2,6);while(gcd(a3,b3)>1){a3=R(1,6);b3=R(a3+1,9);}
+    return frQ(P('기약분수로 나타내요 (약분)')+eq(FR(a3*k,b3*k)+' = '+BOX),a3,b3,'분자와 분모를 둘 다 나눌 수 있는 가장 큰 수(최대공약수)로 나눠요',(a3*k)+'/'+(b3*k)+' = '+a3+'/'+b3+' (분자·분모를 '+k+'로 나눔)');}
+  if(t==='add'||t==='sub'){var d4,d5,n4,n5,v,i=0;
+    do{d4=pick([2,3,4,5,6]);d5=pick([3,4,6,8,9,10]);n4=R(1,d4-1);n5=R(1,d5-1);v=t==='add'?n4*d5+n5*d4:n4*d5-n5*d4;}while((d4===d5||v<=0||(t==='add'&&v>=d4*d5))&&++i<200);
+    var L=lcm(d4,d5);return frQ(P('분모가 다른 분수 '+(t==='add'?'덧셈':'뺄셈'))+eq(FR(n4,d4)+(t==='add'?' + ':' − ')+FR(n5,d5)+' = '+BOX),v,d4*d5,'두 분모의 최소공배수 '+L+'로 통분해요',n4+'/'+d4+(t==='add'?' + ':' − ')+n5+'/'+d5+' = '+(n4*L/d4)+'/'+L+(t==='add'?' + ':' − ')+(n5*L/d5)+'/'+L+' = '+simp(v,d4*d5).join('/'));}
+  if(t==='cmp'){var p1,q1,p2,q2,j=0;do{q1=R(3,9);q2=R(3,9);p1=R(1,q1-1);p2=R(1,q2-1);}while((q1===q2||p1*q2===p2*q1)&&++j<50);
+    var big=p1*q2>p2*q1?'>':'<';return choiceQ(P('크기를 비교해요')+eq(FR(p1,q1)+' ○ '+FR(p2,q2)),big,[big==='>'?'<':'>','='],'통분해서 분자를 비교해요',p1+'/'+q1+' = '+p1*q2+'/'+q1*q2+', '+p2+'/'+q2+' = '+p2*q1+'/'+q1*q2+' → '+p1+'/'+q1+' '+big+' '+p2+'/'+q2);}
+  if(t==='mulN'){var dd=R(4,12),k2=R(2,4),nn=R(1,Math.floor((dd-1)/k2));
+    return frQ(P('분수 × 자연수')+eq(FR(nn,dd)+' × '+k2+' = '+BOX),nn*k2,dd,'분자에 자연수를 곱해요',nn+'/'+dd+' × '+k2+' = '+nn*k2+'/'+dd+(gcd(nn*k2,dd)>1?' = '+simp(nn*k2,dd).join('/'):''));}
+  if(t==='mulF'){var a5=R(1,5),b5=R(a5+1,8),c5=R(1,5),d6=R(c5+1,9);
+    return frQ(P('분수 × 분수')+eq(FR(a5,b5)+' × '+FR(c5,d6)+' = '+BOX),a5*c5,b5*d6,'분자끼리, 분모끼리 곱해요',a5+'/'+b5+' × '+c5+'/'+d6+' = '+a5*c5+'/'+b5*d6+(gcd(a5*c5,b5*d6)>1?' = '+simp(a5*c5,b5*d6).join('/'):''));}
+  if(t==='divN'){var d7=R(3,9),k3=R(2,5),n7=R(1,d7-1);
+    return frQ(P('분수 ÷ 자연수')+eq(FR(n7,d7)+' ÷ '+k3+' = '+BOX),n7,d7*k3,'÷ '+k3+'는 × 1/'+k3+'과 같아요',n7+'/'+d7+' ÷ '+k3+' = '+n7+'/'+d7+' × 1/'+k3+' = '+simp(n7,d7*k3).join('/'));}
+  var a8,b8,c8,d8,m=0;do{b8=R(2,9);d8=R(2,9);a8=R(1,b8-1);c8=R(1,d8-1);}while(a8*d8>=b8*c8&&++m<100);
+  return frQ(P('분수 ÷ 분수')+eq(FR(a8,b8)+' ÷ '+FR(c8,d8)+' = '+BOX),a8*d8,b8*c8,'나누는 분수를 뒤집어서 곱해요',a8+'/'+b8+' ÷ '+c8+'/'+d8+' = '+a8+'/'+b8+' × '+d8+'/'+c8+' = '+simp(a8*d8,b8*c8).join('/'));
+};
+G.dec=function(lv){
+  var t=pick(lv<=5?['add1','sub2','add1']:lv===6?['mulN','f2d','sub2']:lv===7?['mulD','mulD','mulN']:['divN','divD']);
+  if(t==='add1'){var a=RN(11,99),b=RN(11,99);return decQ(P('소수 덧셈')+eq(dfmt(a,1)+' + '+dfmt(b,1)+' = '+BOX),dfmt(a+b,1),'소수점끼리 맞춰서 더해요',dfmt(a,1)+' + '+dfmt(b,1)+' = '+dfmt(a+b,1));}
+  if(t==='sub2'){var c=RN(150,900),d=RN(101,c-20);return decQ(P('소수 뺄셈')+eq(dfmt(c,2)+' − '+dfmt(d,2)+' = '+BOX),dfmt(c-d,2),'소수점끼리 맞춰서 빼요',dfmt(c,2)+' − '+dfmt(d,2)+' = '+dfmt(c-d,2));}
+  if(t==='mulN'){var e=RN(11,99),k=R(2,9),pl=Math.random()<0.5?1:2;return decQ(P('소수 × 자연수')+eq(dfmt(e,pl)+' × '+k+' = '+BOX),dfmt(e*k,pl),e+' × '+k+'를 계산하고 소수점을 '+pl+'칸 옮겨요',e+' × '+k+' = '+e*k+' → '+dfmt(e*k,pl));}
+  if(t==='f2d'){var F=pick([[1,2],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5],[1,20],[3,20],[7,25],[9,10],[3,25],[7,20]]),h=100/F[1];
+    return decQ(P('분수를 소수로 나타내요')+eq(FR(F[0],F[1])+' = '+BOX),dfmt(F[0]*h,2),'분모를 10이나 100으로 만들어 봐요',F[0]+'/'+F[1]+' = '+F[0]*h+'/100 = '+dfmt(F[0]*h,2));}
+  if(t==='mulD'){var x=RN(2,25),y=RN(2,19),px=R(1,2),py=1;return decQ(P('소수 × 소수')+eq(dfmt(x,px)+' × '+dfmt(y,py)+' = '+BOX),dfmt(x*y,px+py),x+' × '+y+' = '+x*y+', 소수점 아래 자리 수는 '+px+' + '+py+' = '+(px+py)+'칸',x+' × '+y+' = '+x*y+' → '+dfmt(x*y,px+py));}
+  if(t==='divN'){var q=RN(11,99),k2=R(2,9);while((q*k2)%10===0)q=RN(11,99);return decQ(P('소수 ÷ 자연수')+eq(dfmt(q*k2,1)+' ÷ '+k2+' = '+BOX),dfmt(q,1),q*k2+' ÷ '+k2+'를 계산하고 소수점 위치를 맞춰요',q*k2+' ÷ '+k2+' = '+q+' → '+dfmt(q,1));}
+  var q2=R(2,12),dv=R(2,9);while((q2*dv)%10===0)q2=R(2,12);return decQ(P('소수 ÷ 소수')+eq(dfmt(q2*dv,1)+' ÷ '+dfmt(dv,1)+' = '+BOX),String(q2),'두 수에 10을 곱해서 자연수 나눗셈으로 바꿔요',dfmt(q2*dv,1)+' ÷ '+dfmt(dv,1)+' = '+q2*dv+' ÷ '+dv+' = '+q2);
+};
+G.factor=function(lv){
+  var t=pick(lv<=5?['mult','notdiv','mult']:lv===6?['gcd','cnt','mult']:['lcm','gcdW','lcmW','gcd']);
+  if(t==='mult'){var n=R(3,9),m=n*R(3,12),o=[];while(o.length<3){var x=R(10,99);if(x%n&&o.indexOf(x)<0&&x!==m)o.push(x);}
+    return choiceQ(P('다음 중 <b>'+n+'의 배수</b>는?'),m,o,n+'단 곱셈구구를 떠올려 봐요',m+' = '+n+' × '+m/n+' 이니까 '+n+'의 배수예요');}
+  if(t==='notdiv'){var N=pick([12,18,20,24,30,36]),ds=[];for(var i=1;i<=N;i++)if(N%i===0)ds.push(i);var non;do{non=R(2,N-1);}while(N%non===0);
+    return choiceQ(P('<b>'+N+'의 약수가 아닌</b> 것은?'),non,shuffle(ds.slice(1,-1)).slice(0,3),N+'을 나누어떨어지게 하는 수가 약수예요',N+'의 약수: '+ds.join(', ')+' → '+non+'은 약수가 아니에요');}
+  if(t==='cnt'){var N2=pick([12,16,18,20,24,28,30,36,40]),ds2=[];for(var j=1;j<=N2;j++)if(N2%j===0)ds2.push(j);
+    return numQ(P('<b>'+N2+'의 약수</b>는 모두 몇 개일까요?'),ds2.length,'1 × '+N2+', 2 × … 처럼 짝을 지어 찾아요',N2+'의 약수: '+ds2.join(', ')+' → '+ds2.length+'개');}
+  var g=R(2,9),a=g*R(2,7),b=g*R(2,7),k=0;while((a===b||gcd(a,b)!==g)&&++k<50){a=g*R(2,7);b=g*R(2,7);}
+  if(t==='gcd')return numQ(P('<b>'+a+'</b>와 <b>'+b+'</b>의 최대공약수는?'),g,'두 수를 동시에 나눌 수 있는 가장 큰 수예요',a+' = '+g+' × '+a/g+', '+b+' = '+g+' × '+b/g+' → 최대공약수 '+g);
+  if(t==='gcdW')return numQ('<div class="word">사탕 '+a+'개와 젤리 '+b+'개를 남김없이 똑같이 나누어 주려고 해요. 최대 몇 명에게 나누어 줄 수 있을까요?</div>',g,'두 수의 최대공약수를 구해요',a+'와 '+b+'의 최대공약수는 '+g+' → '+g+'명');
+  var x2=R(2,9),y2=R(3,12),L;while(x2===y2)y2=R(3,12);L=lcm(x2,y2);
+  if(t==='lcm')return numQ(P('<b>'+x2+'</b>와 <b>'+y2+'</b>의 최소공배수는?'),L,'두 수의 배수를 차례로 써서 처음 같은 수를 찾아요',x2+'의 배수와 '+y2+'의 배수 중 가장 작은 공통 배수는 '+L);
+  return numQ('<div class="word">버스 A는 '+x2+'분마다, 버스 B는 '+y2+'분마다 출발해요. 두 버스가 지금 함께 출발했다면, 다음에 함께 출발하는 것은 몇 분 뒤일까요?</div>',L,'두 수의 최소공배수를 구해요',x2+'와 '+y2+'의 최소공배수 = '+L+' → '+L+'분 뒤');
+};
+G.geo=function(lv){
+  var t=pick(lv<=5?['tri','quad','tri']:lv===6?['rectP','rectA','triA','paraA']:lv===7?['trap','rhom','vol','triA']:['circC','circA','surf','vol']);
+  if(t==='tri'){var a=R(30,80),b=R(30,140-a),c=180-a-b;return numQ(P('삼각형의 나머지 한 각은 몇 도일까요?')+svg(240,150,'<polygon points="20,135 220,135 90,20" '+SH+'/>'+lab(45,128,a+'°')+lab(190,128,b+'°')+lab(92,50,'?°')),c,'삼각형 세 각의 합은 180°예요','180° − '+a+'° − '+b+'° = '+c+'°');}
+  if(t==='quad'){var a2=R(60,120),b2=R(60,120),c2=R(60,120),d2=360-a2-b2-c2;if(d2<40||d2>170)return G.geo(5);
+    return numQ(P('사각형의 나머지 한 각은 몇 도일까요?')+svg(240,150,'<polygon points="20,135 220,130 190,25 50,15" '+SH+'/>'+lab(42,125,a2+'°')+lab(196,122,b2+'°')+lab(180,45,c2+'°')+lab(60,40,'?°')),d2,'사각형 네 각의 합은 360°예요','360° − '+a2+'° − '+b2+'° − '+c2+'° = '+d2+'°');}
+  if(t==='rectP'||t==='rectA'){var w=R(3,15),h=R(2,12),sq=Math.random()<0.3;if(sq)h=w;var area=t==='rectA';
+    return numQ(P((sq?'정사각형':'직사각형')+'의 '+(area?'넓이는 몇 cm²':'둘레는 몇 cm')+'일까요?')+svg(240,150,'<rect x="40" y="20" width="160" height="'+(sq?110:90)+'" '+SH+'/>'+lab(120,(sq?148:132),w+' cm')+(sq?'':lab(228,70,h+' cm'))),area?w*h:2*(w+h),area?'가로 × 세로':'(가로 + 세로) × 2',area?w+' × '+h+' = '+w*h+' cm²':'('+w+' + '+h+') × 2 = '+2*(w+h)+' cm');}
+  if(t==='triA'){var b3=R(2,10)*2,h3=R(3,12);return numQ(P('삼각형의 넓이는 몇 cm²일까요?')+svg(240,150,'<polygon points="20,130 220,130 140,20" '+SH+'/><line x1="140" y1="20" x2="140" y2="130" stroke="#3b2f2a" stroke-dasharray="5 4"/>'+lab(120,148,'밑변 '+b3+' cm')+lab(148,80,'높이 '+h3+' cm','start')),b3*h3/2,'밑변 × 높이 ÷ 2',b3+' × '+h3+' ÷ 2 = '+b3*h3/2+' cm²');}
+  if(t==='paraA'){var b4=R(4,15),h4=R(3,10);return numQ(P('평행사변형의 넓이는 몇 cm²일까요?')+svg(240,150,'<polygon points="20,125 170,125 220,30 70,30" '+SH+'/><line x1="70" y1="30" x2="70" y2="125" stroke="#3b2f2a" stroke-dasharray="5 4"/>'+lab(95,145,'밑변 '+b4+' cm')+lab(76,85,'높이 '+h4+' cm','start')),b4*h4,'밑변 × 높이',b4+' × '+h4+' = '+b4*h4+' cm²');}
+  if(t==='trap'){var a5=R(3,9),b5=a5+R(2,8),h5=R(2,8)*2;return numQ(P('사다리꼴의 넓이는 몇 cm²일까요?')+svg(240,150,'<polygon points="15,125 225,125 170,30 70,30" '+SH+'/><line x1="70" y1="30" x2="70" y2="125" stroke="#3b2f2a" stroke-dasharray="5 4"/>'+lab(120,22,'윗변 '+a5+' cm')+lab(120,145,'아랫변 '+b5+' cm')+lab(76,85,'높이 '+h5+' cm','start')),(a5+b5)*h5/2,'(윗변 + 아랫변) × 높이 ÷ 2','('+a5+' + '+b5+') × '+h5+' ÷ 2 = '+(a5+b5)*h5/2+' cm²');}
+  if(t==='rhom'){var p=R(2,9)*2,q=R(3,12);return numQ(P('마름모의 넓이는 몇 cm²일까요?')+svg(240,150,'<polygon points="120,10 210,75 120,140 30,75" '+SH+'/><line x1="30" y1="75" x2="210" y2="75" stroke="#3b2f2a" stroke-dasharray="5 4"/><line x1="120" y1="10" x2="120" y2="140" stroke="#3b2f2a" stroke-dasharray="5 4"/>'+lab(72,68,p+' cm')+lab(128,38,q+' cm','start')),p*q/2,'대각선 × 대각선 ÷ 2',p+' × '+q+' ÷ 2 = '+p*q/2+' cm²');}
+  var box=function(a,b,c){return svg(240,160,'<polygon points="30,60 160,60 160,150 30,150" '+SH+'/><polygon points="30,60 80,20 210,20 160,60" '+SH+'/><polygon points="160,60 210,20 210,110 160,150" '+SH+'/>'+lab(95,158,a+' cm')+lab(198,145,b+' cm')+lab(220,70,c+' cm','start'));};
+  if(t==='vol'){var x=R(2,9),y=R(2,8),z=R(2,7);return numQ(P('직육면체의 부피는 몇 cm³일까요?')+box(x,y,z),x*y*z,'가로 × 세로 × 높이',x+' × '+y+' × '+z+' = '+x*y*z+' cm³');}
+  if(t==='surf'){var x2=R(2,8),y2=R(2,6),z2=R(2,6),sa=2*(x2*y2+y2*z2+x2*z2);return numQ(P('직육면체의 겉넓이는 몇 cm²일까요?')+box(x2,y2,z2),sa,'세 쌍의 면 넓이를 더하고 2배 해요','('+x2+'×'+y2+' + '+y2+'×'+z2+' + '+x2+'×'+z2+') × 2 = '+sa+' cm²');}
+  var r=R(2,10),circ=svg(220,150,'<circle cx="110" cy="75" r="62" '+SH+'/><line x1="110" y1="75" x2="172" y2="75" stroke="#3b2f2a" stroke-width="2"/><circle cx="110" cy="75" r="3"/>'+lab(141,68,'반지름 '+r+' cm'));
+  if(t==='circC')return decQ(P('원의 둘레는 몇 cm일까요? (원주율 3.14)')+circ,dfmt(2*r*314,2),'지름 × 원주율 = 반지름 × 2 × 3.14',r+' × 2 × 3.14 = '+dfmt(2*r*314,2)+' cm');
+  return decQ(P('원의 넓이는 몇 cm²일까요? (원주율 3.14)')+circ,dfmt(r*r*314,2),'반지름 × 반지름 × 3.14',r+' × '+r+' × 3.14 = '+dfmt(r*r*314,2)+' cm²');
+};
+G.ratio=function(lv){
+  var t=pick(lv<=5?['rule','rule2']:lv===6?['avg','avgW','rule']:lv===7?['rate','pct','sale']:['prop','share','pct']);
+  if(t==='rule'||t==='rule2'){var k=R(2,9),add=t==='rule2'&&Math.random()<0.5,xs=[1,2,3,4],x=R(6,12),f=function(v){return add?v+k:v*k;},tb='<table class="tb" style="margin:8px auto;font-size:24px;border-collapse:collapse">';
+    tb+='<tr><th style="border:2px solid #e5d8c8;padding:6px 12px">△</th>'+xs.map(function(v){return '<td style="border:2px solid #e5d8c8;padding:6px 12px">'+v+'</td>';}).join('')+'<td style="border:2px solid #e5d8c8;padding:6px 12px">'+x+'</td></tr><tr><th style="border:2px solid #e5d8c8;padding:6px 12px">○</th>'+xs.map(function(v){return '<td style="border:2px solid #e5d8c8;padding:6px 12px">'+f(v)+'</td>';}).join('')+'<td style="border:2px solid #e5d8c8;padding:6px 12px">'+BOX+'</td></tr></table>';
+    return numQ(P('△와 ○ 사이의 규칙을 찾아 빈칸을 채워요')+tb,f(x),'△가 1 커질 때 ○는 얼마나 커지나요?','규칙: ○ = △ '+(add?'+ ':'× ')+k+' → '+x+(add?' + ':' × ')+k+' = '+f(x));}
+  if(t==='avg'||t==='avgW'){var n=R(3,5),av=R(5,30),vs=[],s=0;for(var i=0;i<n-1;i++){var v=av+R(-4,4);vs.push(v);s+=v;}var last=av*n-s;if(last<1)return G.ratio(lv);vs.push(last);vs=shuffle(vs);
+    if(t==='avg')return numQ(P('평균을 구해요')+eq(vs.join(', ')),av,'모두 더한 다음 개수로 나눠요','('+vs.join(' + ')+') ÷ '+n+' = '+av*n+' ÷ '+n+' = '+av);
+    return numQ('<div class="word">'+n+'일 동안 읽은 책 쪽수가 '+vs.join('쪽, ')+'쪽이에요. 하루 평균 몇 쪽을 읽었을까요?</div>',av,'합계 ÷ 날수',av*n+' ÷ '+n+' = '+av+'쪽');}
+  if(t==='rate'){var a=R(1,9),b=R(a+1,12),k2=R(1,4);return frQ(P('<b>'+b*k2+'</b>에 대한 <b>'+a*k2+'</b>의 비율을 기약분수로 나타내요')+eq(a*k2+' : '+b*k2+' = '+BOX),a,b,'비율 = 비교하는 양 ÷ 기준량',a*k2+' ÷ '+b*k2+' = '+simp(a,b).join('/'));}
+  if(t==='pct'){var tot=pick([10,20,25,50]),part=R(1,tot-1),pc=part*100/tot;return numQ('<div class="word">반 학생 '+tot+'명 중 '+part+'명이 안경을 썼어요. 안경을 쓴 학생은 전체의 몇 %일까요?</div>',pc,'(부분 ÷ 전체) × 100',part+' ÷ '+tot+' × 100 = '+pc+'%');}
+  if(t==='sale'){var pr=R(2,20)*1000,pc2=pick([10,20,25,30,50]),sv=pr*pc2/100;return numQ('<div class="word">'+com(pr)+'원짜리 장난감을 '+pc2+'% 할인해서 팔아요. 할인한 가격은 몇 원일까요?</div>',pr-sv,'먼저 할인되는 금액을 구해요',com(pr)+' × '+pc2+'/100 = '+com(sv)+'원 할인 → '+com(pr)+' − '+com(sv)+' = '+com(pr-sv)+'원');}
+  if(t==='prop'){var p1=R(2,9),q1=R(2,9),m=R(2,6);while(p1===q1)q1=R(2,9);var askLast=Math.random()<0.5;
+    return numQ(P('비례식을 완성해요')+eq(p1+' : '+q1+' = '+(askLast?p1*m+' : '+BOX:BOX+' : '+q1*m)),askLast?q1*m:p1*m,'외항의 곱 = 내항의 곱, 또는 몇 배가 되었는지 봐요',p1+' : '+q1+' = '+p1*m+' : '+q1*m+' (× '+m+')');}
+  var x1=R(1,5),y1=R(x1+1,8),u=R(2,9),T=(x1+y1)*u;return numQ('<div class="word">사탕 '+T+'개를 형과 동생이 '+y1+' : '+x1+'로 나누어 가져요. 동생은 몇 개를 가질까요?</div>',x1*u,'전체를 '+(x1+y1)+'으로 나눈 것 중 '+x1+'만큼이에요',T+' × '+x1+'/'+(x1+y1)+' = '+x1*u+'개');
+};
 /*GEN-END*/
 
-var SKILLS=[['sense','수 감각','🧩'],['inverse','거꾸로 생각하기','🔄'],['estimate','어림과 비교','⚖️'],['strategy','계산 전략','💡'],['pattern','규칙 찾기','🔍'],['visual','그림 문제','🍪'],['cards','숫자 카드','🃏'],['word','문장제','📖'],['error','틀린 곳 찾기','🐻']];
+var SKILLS=[['sense','수 감각','🧩'],['inverse','거꾸로 생각하기','🔄'],['estimate','어림과 비교','⚖️'],['strategy','계산 전략','💡'],['pattern','규칙 찾기','🔍'],['visual','그림 문제','🍪'],['cards','숫자 카드','🃏'],['word','문장제','📖'],['error','틀린 곳 찾기','🐻'],
+  ['bignum','큰 수·곱셈·나눗셈','🔢'],['frac','분수','🍕'],['dec','소수','🔟'],['factor','약수·배수','🧮'],['geo','도형·넓이','📐'],['ratio','규칙·평균·비율','📊']];
+var UPS=['bignum','frac','dec','factor','geo','ratio'],OLDUP=['inverse','estimate','pattern','word','error'];
+function isUp(){return ['4','5','6'].indexOf(PROF.grade)>=0;}
+function actSk(){return isUp()?UPS.concat(UPS,OLDUP):SKILLS.map(function(s){return s[0];}).filter(function(k){return UPS.indexOf(k)<0;});}
+function actList(){var a=actSk();return SKILLS.filter(function(s){return a.indexOf(s[0])>=0;});}
 var SK={};SKILLS.forEach(function(s){SK[s[0]]={name:s[1],icon:s[2]};});
 var STICKERS='🦁 🐯 🐻 🐼 🐨 🐰 🦊 🐸 🐵 🦄 🐲 🦖 🐳 🐬 🦋 🐞 🌻 🌈 🚀 🚂 🚒 🏰 🎈 🍦 🍩 🍓 ⚽ 🎸 🏆 👑'.split(' ');
 var PER_STICKER=10;
 var KEY='kidsMath.v1';
-var GRADES={K:{name:'유치원',min:0,max:0,mul:false,div:false,daily:10},'1':{name:'1학년',min:1,max:2,mul:false,div:false,daily:15},'2':{name:'2학년',min:2,max:4,mul:true,div:false,daily:20},'3':{name:'3학년',min:3,max:5,mul:true,div:true,daily:20}};
+var GRADES={K:{name:'유치원',min:0,max:0,mul:false,div:false,daily:10},'1':{name:'1학년',min:1,max:2,mul:false,div:false,daily:15},'2':{name:'2학년',min:2,max:4,mul:true,div:false,daily:20},'3':{name:'3학년',min:3,max:5,mul:true,div:true,daily:20},'4':{name:'4학년',min:5,max:6,mul:true,div:true,daily:20},'5':{name:'5학년',min:6,max:7,mul:true,div:true,daily:20},'6':{name:'6학년',min:7,max:8,mul:true,div:true,daily:20}};
 var HUB=null,PROF=null;
 function hubLoad(){try{HUB=JSON.parse(localStorage.getItem('kidsHub.v1')||'null');}catch(e){HUB=null;}
   if(!HUB||!HUB.profiles||!HUB.profiles.length){var nm='';try{var o=JSON.parse(localStorage.getItem('kidsMath.v1')||'{}');nm=(o.settings&&o.settings.name)||'';}catch(e){}HUB={profiles:[{id:'p1',name:nm,grade:'2'}],cur:'p1'};hubSave();}
@@ -428,12 +561,12 @@ var app=document.getElementById('app');
 function buildSession(){
   var n=S.settings.daily||20,items=[],nr=Math.min(S.review.length,Math.floor(n*0.25));
   var rv=S.review.slice(0,nr).map(function(e){return {skill:e.skill,pending:true,review:true,rid:e.rid,lv:e.lv};});
-  var order=[];while(order.length<n-nr){order=order.concat(shuffle(SKILLS.map(function(s){return s[0];})));}
+  var order=[];while(order.length<n-nr){order=order.concat(shuffle(actSk()));}
   order.slice(0,n-nr).forEach(function(sk){items.push({skill:sk,pending:true});});
   rv.forEach(function(p){var pos=R(Math.min(2,items.length),items.length);items.splice(pos,0,p);});
   S.session={date:today(),items:items,idx:0,correct:0,stars:0,newStickers:[],done:false};save();
 }
-function gen(sk,lv){lv=lv||S.levels[sk].lv;var p=G[sk](lv,S.settings.name);p.skill=sk;p.lv=lv;return p;}
+function gen(sk,lv){lv=lv||S.levels[sk].lv;var glv=UPS.indexOf(sk)<0?Math.min(lv,5):Math.max(5,lv);var p=G[sk](glv,S.settings.name);p.skill=sk;p.lv=lv;return p;}
 function curP(){var ss=S.session,p=ss.items[ss.idx];if(p.pending){var q=p;p=gen(q.skill,q.lv);if(q.review){p.isReview=true;p.rid=q.rid;}ss.items[ss.idx]=p;save();}return p;}
 var cur={tries:0,input:'',locked:false,wrongIdx:[],stage2:false};
 function resetCur(){cur={tries:0,input:'',locked:false,wrongIdx:[],stage2:false};}
@@ -484,8 +617,8 @@ function rHome(){
   h+='<div class="lock"><button onclick="App.go(\'lock\')">🔒 부모님 화면</button></div>';
   app.innerHTML=h;
 }
-function padHtml(){var h='<div class="pad">';[1,2,3,4,5,6,7,8,9].forEach(function(n){h+='<button onclick="App.key(\''+n+'\')">'+n+'</button>';});
-  h+='<button class="del" onclick="App.key(\'del\')">⌫</button><button onclick="App.key(\'0\')">0</button><button class="ok" onclick="App.key(\'ok\')">확인</button></div>';return h;}
+function padHtml(p){var h='<div class="pad">';[1,2,3,4,5,6,7,8,9].forEach(function(n){h+='<button onclick="App.key(\''+n+'\')">'+n+'</button>';});
+  h+='<button class="del" onclick="App.key(\'del\')">⌫</button><button onclick="App.key(\'0\')">0</button><button class="ok" onclick="App.key(\'ok\')">확인</button>'+(p&&p.pad==='frac'?'<button class="xk" onclick="App.key(\'/\')">/ 분수</button>':'')+(p&&p.pad==='dec'?'<button class="xk" onclick="App.key(\'.\')">. 소수점</button>':'')+'</div>';return h;}
 function rQuiz(){
   var ss=S.session,p=curP(),pct=Math.round(ss.idx/ss.items.length*100);
   var h='<div class="top"><button class="pill" onclick="App.go(\'home\')">🏠</button><div class="grow"><div class="progress"><div style="width:'+pct+'%"></div></div></div><div class="pill">⭐ '+S.stars+'</div></div>';
@@ -493,7 +626,7 @@ function rQuiz(){
   if((p.say||p.speak||GR.min===0)&&window.speechSynthesis)h+='<button class="say" onclick="App.say()">🔊</button>';
   var body=p.html;if(cur.locked&&p.mode==='num')body=body.replace(BOX,'<span class="box" style="border-style:solid;color:#22a35a;border-color:#2ecc71">'+esc(p.answer)+'</span>');
   h+='<span class="qnum">'+(ss.idx+1)+' / '+ss.items.length+'</span></div>'+body+'</div><div>';
-  if(p.mode==='num'||cur.stage2){h+='<div class="answer-disp" id="disp">'+(cur.input||'&nbsp;')+'</div>'+padHtml();}
+  if(p.mode==='num'||cur.stage2){h+='<div class="answer-disp" id="disp">'+(cur.input||'&nbsp;')+'</div>'+padHtml(cur.stage2?null:p);}
   else{h+='<div class="choices '+(p.cls||'')+'">';p.choices.forEach(function(c,i){var cl=cur.wrongIdx.indexOf(i)>=0?'no':'';if(cur.locked&&c===p.answer)cl='yes';h+='<button class="'+cl+'" onclick="App.choose('+i+')">'+esc(c)+'</button>';});h+='</div>';}
   h+='<div class="fb" id="fb">'+(cur.fb||'')+'</div></div></div></div>';
   app.innerHTML=h;
@@ -513,7 +646,7 @@ function submit(val,choiceIdx){
     cur.tries++;beep(false);
     if(cur.tries<2){cur.input='';cur.fb='<div class="bad">아쉬워요! 곰돌이 식을 직접 계산해 봐요 🤔</div><div class="hint">💡 '+p.hint+'</div>';render();return;}
     loseQ(p,val,p.fix);return;}
-  var ok=String(val)===String(p.answer),max=(p.mode==='choice'&&p.choices.length<=2)?1:2;
+  var ok=p.chk?chkAns(p.chk,val):String(val)===String(p.answer),max=(p.mode==='choice'&&p.choices.length<=2)?1:2;
   if(ok&&p.fix){cur.stage2=true;cur.tries=0;cur.input='';beep(true);
     cur.fb='<div class="good" style="font-size:30px">맞아요, 곰돌이가 틀렸어요! 👍</div><div class="hint">그럼 바른 답은 얼마일까요? 숫자를 눌러 입력해요.</div>';render();return;}
   if(ok){winQ(p,cur.tries===0,val);return;}
@@ -571,9 +704,9 @@ function rParent(){
   var agg={};SKILLS.forEach(function(s){agg[s[0]]={t:0,f:0};});
   Object.keys(S.days).forEach(function(k){var by=S.days[k].by||{};for(var sk in by){if(agg[sk]){agg[sk].t+=by[sk].t;agg[sk].f+=(by[sk].f||0);}}});
   h+='<h3>🧠 유형별 (한 번에 정답률 · 현재 단계)</h3><table><tr><th>유형</th><th>정답률</th><th></th><th>단계</th></tr>';
-  SKILLS.forEach(function(s){var a=agg[s[0]],r=a.t?Math.round(a.f/a.t*100):0,L=S.levels[s[0]].lv;
+  actList().forEach(function(s){var a=agg[s[0]],r=a.t?Math.round(a.f/a.t*100):0,L=S.levels[s[0]].lv;
     h+='<tr><td style="text-align:left">'+s[2]+' '+s[1]+'</td><td style="width:30%"><div class="bar"><div style="width:'+r+'%"></div></div></td><td>'+(a.t?r+'% ('+a.t+')':'-')+'</td><td style="white-space:nowrap"><button class="sbtn" onclick="App.lv(\''+s[0]+'\',-1)">−</button> '+L+' <button class="sbtn" onclick="App.lv(\''+s[0]+'\',1)">+</button></td></tr>';});
-  h+='</table><div class="muted" style="margin-top:6px">단계는 1~5. 한 번에 3문제 연속 맞히면 올라가고, 2문제 연속 틀리면 내려가요.</div>';
+  h+='</table><div class="muted" style="margin-top:6px">단계는 '+GR.min+'~'+GR.max+' (학년 범위). 한 번에 3문제 연속 맞히면 올라가고, 2문제 연속 틀리면 내려가요.</div>';
   // 오답
   var ws=[];keys.forEach(function(k){(S.days[k].wrongs||[]).forEach(function(w){ws.push({d:k,w:w});});});
   h+='<h3>❌ 최근 틀린 문제</h3>';
@@ -583,7 +716,7 @@ function rParent(){
   // 설정
   h+='<div class="card" style="margin-top:16px"><h2>⚙️ 설정</h2>';
   h+='<div class="row">아이 이름 <input id="nm" value="'+esc(S.settings.name)+'" maxlength="8" style="width:140px"> <button class="sbtn" onclick="App.setName()">저장</button></div>';
-  h+='<div class="row">학년 ';['K','1','2','3'].forEach(function(g){h+='<button class="sbtn"'+(PROF.grade===g?' style="background:#ff9f43;color:#fff;border-color:#ff9f43"':'')+' onclick="App.setGrade(\''+g+'\')">'+GRADES[g].name+'</button> ';});h+='<span class="muted">(바꾸면 단계가 그 학년 처음으로 돌아가요)</span></div>';
+  h+='<div class="row">학년 ';['K','1','2','3','4','5','6'].forEach(function(g){h+='<button class="sbtn"'+(PROF.grade===g?' style="background:#ff9f43;color:#fff;border-color:#ff9f43"':'')+' onclick="App.setGrade(\''+g+'\')">'+GRADES[g].name+'</button> ';});h+='<span class="muted">(바꾸면 단계가 그 학년 처음으로 돌아가요)</span></div>';
   h+='<div class="row">하루 문제 수 <select id="dl" onchange="App.setDaily()">';[10,15,20,25,30].forEach(function(n){h+='<option'+(n===S.settings.daily?' selected':'')+'>'+n+'</option>';});h+='</select> <span class="muted">(다음 세트부터 적용)</span></div>';
   h+='<div class="row"><button class="sbtn" onclick="App.again()">🔄 오늘 문제 새로 한 세트 더</button><button class="sbtn" onclick="App.newPin()">🔑 비밀번호 바꾸기</button></div>';
   h+='<h3>💾 백업 / 복원</h3><div class="muted">기기를 바꾸거나 브라우저 데이터를 지울 때를 대비해 백업 코드를 복사해 두세요.</div><textarea id="bk" readonly onclick="this.select()"></textarea><div class="row"><button class="sbtn" onclick="App.copyBk()">백업 코드 만들기·복사</button><span id="bkmsg" class="muted"></span></div>';
@@ -596,7 +729,7 @@ function confirmBox(msg,yes){var o=document.createElement('div');o.className='ov
 window.App={
   go:go,
   start:function(){var ss=S.session;if(!ss||ss.date!==today())buildSession();if(S.session.done){go('home');return;}resetCur();go('quiz');},
-  key:function(k){if(cur.locked)return;if(k==='del')cur.input=cur.input.slice(0,-1);else if(k==='ok'){if(cur.input!=='')submit(cur.input);return;}else if(cur.input.length<5)cur.input=(cur.input==='0'?'':cur.input)+k;
+  key:function(k){if(cur.locked)return;if(k==='del')cur.input=cur.input.slice(0,-1);else if(k==='ok'){if(cur.input!=='')submit(cur.input);return;}else if(cur.input.length<9){if((k==='/'||k==='.')&&(cur.input===''||/[\/.]/.test(cur.input)))return;cur.input=(cur.input==='0'&&k!=='.'&&k!=='/'?'':cur.input)+k;}
     var d=document.getElementById('disp');if(d)d.innerHTML=cur.input||'&nbsp;';},
   choose:function(i){if(cur.stage2)return;var p=curP();submit(p.choices[i],i);},
   next:function(){var ss=S.session;ss.idx++;resetCur();if(ss.idx>=ss.items.length){ss.done=true;save();go('result');}else{save();go('quiz');}},
