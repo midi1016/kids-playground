@@ -73,6 +73,7 @@ h1{font-weight:normal;font-size:44px;text-align:center;margin:6px 0 2px}
 .tile.run{outline:5px solid #ffd43b;outline-offset:1px;animation:glow .5s ease-in-out infinite alternate}
 .tile.err{outline:5px solid #fa5252;outline-offset:1px}
 @keyframes glow{from{transform:scale(1)}to{transform:scale(1.12)}}
+.c-fn{background:#f59f00}.fnbox{width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:6px;border:4px solid #f59f00;border-radius:18px;padding:5px;background:#fff9db;min-height:72px}.fnbox.open{border-style:dashed;background:#fff3bf}.fnbox .fl{font-size:18px;padding:0 6px;color:#e67700}.mainl{width:100%;font-size:17px;color:var(--sub)}
 .c-ar{background:#4dabf7}.c-fw{background:#40c057}.c-tn{background:#ff922b}.c-rp{background:#9775fa}.c-pk{background:#f06595}.c-if{background:#e8590c}.tile.selb{outline:6px solid #7048e8;outline-offset:2px}.ctl button.on{background:#e5dbff}.c-pt{background:#12b886}
 .rep{display:flex;align-items:center;flex-wrap:wrap;gap:6px;border:4px solid #9775fa;border-radius:18px;padding:5px;background:#f3f0ff;min-height:72px}
 .rep.open{border-style:dashed;background:#ebe4ff}
@@ -119,7 +120,8 @@ var STAGES=[
   {n:'버그 찾기',d:'🐞 틀린 블록을 찾아 고쳐요',say:'이 프로그램에 버그가 있어요. 실행해 보고 틀린 블록을 찾아 고쳐요.'},
   {n:'미리 맞히기',d:'🚩 로봇이 어디에 도착할까?',say:'블록을 잘 읽고 로봇이 도착할 칸을 먼저 눌러요.'},
   {n:'그림 그리기',d:'✏️ 펜 로봇으로 모양 그리기',say:'로봇이 지나간 길에 선이 그려져요. 흐린 모양과 똑같이 그려요.'},
-  {n:'만약 블록',d:'🧠 막히면 알아서 돌기',say:'만약 블록은 앞이 막혔을 때만 돌아요. 반복이랑 같이 써 봐요.'}
+  {n:'만약 블록',d:'🧠 막히면 알아서 돌기',say:'만약 블록은 앞이 막혔을 때만 돌아요. 반복이랑 같이 써 봐요.'},
+  {n:'나만의 블록',d:'🧩 자주 쓰는 블록을 ⭐로 묶어 다시 쓰기',say:'똑같이 되풀이되는 블록을 별 블록 하나로 묶어요. 메인 블록 수가 정해져 있어요.'}
 ];
 var LV=[
   [0,['.....','R...B','.....']],
@@ -178,17 +180,33 @@ DRAWL.forEach(function(d){LV.push([7,d[0],d[1],'그림: '+d[2],{draw:true}]);});
 var IFL=[[['>....','####.','####.','####B'],[['rep',7,['ifr','fw']]]],[['>....','####.','B....'],[['rep',10,['ifr','fw']]]],
   [['B....','####.','>....'],[['rep',10,['ifl','fw']]]],[['>....','####.','..B#.','.###.','.....'],[['rep',16,['ifr','fw']]]]];
 IFL.forEach(function(d){LV.push([8,d[0],d[1],'만약 블록']);});
+// 나만의 블록(함수): 풀이로 길을 만들어 판을 짓는다. max = 메인 블록 최대 개수
+var FNL=[{m:['fn','fn','fn','fn'],f:['right','down'],max:4,t:'계단'},{m:['fn','fn','fn'],f:['right','right','up'],max:3,t:'산 오르기'},
+ {m:['fn','fn','fn'],f:['right','right','pick'],max:3,t:'별 줍기'},{m:['fn','fn','fn','fn'],f:['right','pick','down'],max:4,t:'별 계단'},
+ {m:['fn','fn','fn'],f:['fw','fw','tr'],max:3,turn:1,t:'네모 길'},{m:[['rep',3,['fn']]],f:['right','right','down'],max:2,t:'반복 + 내 블록'},
+ {m:[['rep',3,['fn']],'fw'],f:['fw','fw','pick','tr'],max:3,turn:1,t:'별 정원'},{m:['fn','tl','fn','tr','fn'],f:['fw','fw','fw'],max:5,turn:1,t:'지그재그'}];
+function fnMap(L){var r=0,c=0,d=1,cells={'0,0':1},picks={},seq=[];
+  function walk(x){if(typeof x!=='string'){for(var k=0;k<x[1];k++)x[2].forEach(walk);return;}if(x==='fn'){L.f.forEach(walk);return;}
+    if(x==='tl')d=(d+3)%4;else if(x==='tr')d=(d+1)%4;else if(x==='pick')picks[r+','+c]=1;else{var dd=x==='fw'?d:ABS[x];r+=DR[dd];c+=DC[dd];cells[r+','+c]=1;}}
+  L.m.forEach(walk);var ks=Object.keys(cells).map(function(k){return k.split(',').map(Number);}),r0=1e9,c0=1e9,r1=-1e9,c1=-1e9;
+  ks.forEach(function(p){r0=Math.min(r0,p[0]);c0=Math.min(c0,p[1]);r1=Math.max(r1,p[0]);c1=Math.max(c1,p[1]);});
+  var m=[];for(var y=r0;y<=r1;y++){var row='';for(var x=c0;x<=c1;x++){var k=y+','+x;
+    row+=(y===0&&x===0)?(L.turn?'>':'R'):(y===r&&x===c)?'B':picks[k]?'*':cells[k]?'.':((y*3+x)%2?'#':'.');}m.push(row);}
+  if(m.length<2)m.push(new Array(m[0].length+1).join('#'));return m;}
+
 var ITEM={b:{e:'📚',n:'책',to:'K'},p:{e:'✏️',n:'연필',to:'P'},t:{e:'🧸',n:'곰인형',to:'T'},s:{e:'🧦',n:'양말',to:'L'},w:{e:'👕',n:'옷',to:'L'},q:{n:'이불',to:'D'},l:{n:'베개',to:'D'}};
 function js(w,a,b){var c=w.charCodeAt(w.length-1);return w+((c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28)?a:b);}
 var TGT={K:'책꽂이',P:'연필꽂이',T:'장난감 상자',L:'빨래 바구니',D:'침대'};
 var DR=[-1,0,1,0],DC=[0,1,0,-1],ABS={up:0,right:1,down:2,left:3};
-function parse(i){var L=LV[i],m=L[1],o={st:L[0],title:L[3],rows:m.length,cols:m[0].length,wall:{},stars:[],items:[],tgt:{},sol:L[2],opts:L[4]||{}};o.mode=['','','','','','debug','pred','draw','if'][o.st]||'';
+FNL.forEach(function(L){LV.push([9,fnMap(L),L.m,L.t,{fn:L.f,max:L.max}]);});
+function parse(i){var L=LV[i],m=L[1],o={st:L[0],title:L[3],rows:m.length,cols:m[0].length,wall:{},stars:[],items:[],tgt:{},sol:L[2],opts:L[4]||{}};o.mode=['','','','','','debug','pred','draw','if','fn'][o.st]||'';
   for(var r=0;r<o.rows;r++)for(var c=0;c<o.cols;c++){var ch=m[r].charAt(c);
     if(ch==='#')o.wall[r+','+c]=1;else if(ch==='B')o.bat=[r,c];else if(ch==='*')o.stars.push([r,c]);
     else if(ITEM[ch])o.items.push({r:r,c:c,k:ch});else if(TGT[ch])o.tgt[r+','+c]=ch;
     else if('R^>v<'.indexOf(ch)>=0){o.start=[r,c,ch==='R'?1:'^>v<'.indexOf(ch)];o.turn=ch!=='R';}}
   o.pal=o.turn?['fw','tl','tr']:['up','down','left','right'];if(o.st===3||o.st===8||(o.st===7&&o.turn))o.pal.push('rep');if(o.st===8)o.pal.push('ifr','ifl');if(o.stars.length||o.items.length)o.pal.push('pick');if(o.items.length)o.pal.push('put');
   if(o.mode==='debug')o.pal=parse(o.opts.ref).pal;
+  if(o.mode==='fn'){o.pal=o.pal.filter(function(x){return x!=='rep';});if(JSON.stringify(o.sol).indexOf('rep')>=0)o.pal.push('rep');o.pal.push('fn');}
   return o;}
 function free(P,r,c){return r>=0&&c>=0&&r<P.rows&&c<P.cols&&!P.wall[r+','+c];}
 function starIdx(P,r,c){for(var i=0;i<P.stars.length;i++)if(P.stars[i][0]===r&&P.stars[i][1]===c)return i;return -1;}
@@ -221,8 +239,9 @@ function solve(P){
   return null;}
 function solToProg(sol){return sol.map(function(x){return typeof x==='string'?{t:x}:{t:'rep',n:x[1],b:x[2].map(function(y){return {t:y};})};});}
 function countBlocks(p){var n=0;p.forEach(function(b){n++;if(b.t==='rep')n+=b.b.length;});return n;}
-function flatten(p){var out=[];p.forEach(function(b,i){if(b.t==='rep'){for(var k=0;k<b.n;k++)b.b.forEach(function(x,j){out.push({op:x.t,id:i+'.'+j,rep:i});});}else out.push({op:b.t,id:''+i});});return out;}
-function simulate(P,prog){var s=newState(P),path=[[s.r,s.c]],steps=flatten(prog);
+function flatten(p,fb){fb=fb||(G&&G.fn)||[];var out=[];function one(t,id,rp){if(t==='fn')fb.forEach(function(x,j){out.push({op:x.t,id:'f'+j,fc:id,rep:rp});});else out.push({op:t,id:id,rep:rp});}
+  p.forEach(function(b,i){if(b.t==='rep'){for(var k=0;k<b.n;k++)b.b.forEach(function(x,j){one(x.t,i+'.'+j,i);});}else one(b.t,''+i,null);});return out;}
+function simulate(P,prog,fb){var s=newState(P),path=[[s.r,s.c]],steps=flatten(prog,fb);
   for(var i=0;i<steps.length;i++){var res=step(P,s,steps[i].op);if(res==='bump'||res==='out'||res==='wrong')return {res:res,path:path};if(res==='move')path.push([s.r,s.c]);if(isDone(P,s))return {res:'win',path:path};}
   return {res:'end',path:path};}
 function ekey(a,b){return a[0]<b[0]||(a[0]===b[0]&&a[1]<=b[1])?a.join(',')+'-'+b.join(','):b.join(',')+'-'+a.join(',');}
@@ -237,6 +256,7 @@ function mkInfo(i){var P=parse(i);
   if(P.mode==='debug'){var R0=INFO[P.opts.ref];return {par:R0.par,path:R0.path,ok:true,spec:R0.spec,bug:mutate(R0.spec,P.opts.mut)};}
   if(P.mode==='pred'){var R1=INFO[P.opts.ref],sp=P.opts.pprog||R1.spec.slice(0,P.opts.pk),sm=simDraw(P,solToProg(sp));return {par:0,path:[],ok:sm.ok,spec:sp,end:sm.end};}
   if(P.mode==='draw'){var pd=solToProg(P.sol),sd=simDraw(P,pd);return {par:countBlocks(pd),path:sd.path,ok:sd.ok,edges:sd.edges,spec:P.sol};}
+  if(P.mode==='fn'){var pf=solToProg(P.sol),ff=solToProg(P.opts.fn),sf=simulate(P,pf,ff);return {par:countBlocks(pf)+ff.length,path:sf.path,ok:sf.res==='win',spec:P.sol};}
   if(P.sol){var pr=solToProg(P.sol),sim=simulate(P,pr);return {par:countBlocks(pr),path:sim.path,ok:sim.res==='win',spec:P.sol};}
   var S=solve(P);return S?{par:S.n,path:S.path,ops:S.ops,ok:true,spec:S.ops}:{par:99,path:[],ok:false,spec:[]};}
 for(var ii=0;ii<LV.length;ii++)INFO.push(mkInfo(ii));
@@ -282,10 +302,11 @@ function ico(t){
   else if(t==='rep')s+='<path d="M28 40 A24 24 0 0 1 72 34" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M80 18 L82 44 L58 38 Z" fill="#fff"/><path d="M72 60 A24 24 0 0 1 28 66" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M20 82 L18 56 L42 62 Z" fill="#fff"/>';
   else if(t==='pick')s+='<path d="M50 8 V36" '+W+'/><path d="M24 40 H76" '+W+'/><path d="M30 40 Q14 62 32 84" '+W+'/><path d="M70 40 Q86 62 68 84" '+W+'/><circle cx="50" cy="72" r="10" fill="#fff"/>';
   else if(t==='ifr'||t==='ifl'){var g='<rect x="12" y="8" width="76" height="20" rx="4" fill="#fff"/><path d="M22 18 H78" stroke="#f59f00" stroke-width="4"/><path d="M44 92 V60 C44 46 54 42 66 42 H70" '+W+'/><path d="M66 28 L90 42 L66 56 Z" fill="#fff"/>';s+=t==='ifr'?g:'<g transform="translate(100 0) scale(-1 1)">'+g+'</g>';}
+  else if(t==='fn')s+='<path d="M50 10 L61 37 L90 38 L67 56 L75 85 L50 68 L25 85 L33 56 L10 38 L39 37 Z" fill="#fff" stroke="rgba(0,0,0,.2)" stroke-width="3" stroke-linejoin="round"/>';
   else if(t==='put')s+='<path d="M50 10 V50" '+W+'/><path d="M32 34 L50 52 L68 34" '+W+'/><path d="M18 62 V86 H82 V62" '+W+'/>';
   return s+'</svg>';}
-var NAMEB={up:'위로',down:'아래로',left:'왼쪽으로',right:'오른쪽으로',fw:'앞으로',tl:'왼쪽 돌기',tr:'오른쪽 돌기',rep:'반복',pick:'집기',put:'놓기',ifr:'막히면 오른쪽',ifl:'막히면 왼쪽'};
-function cls(t){return ABS[t]!=null?'c-ar':t==='fw'?'c-fw':t==='rep'?'c-rp':t==='pick'?'c-pk':t==='put'?'c-pt':(t==='ifr'||t==='ifl')?'c-if':'c-tn';}
+var NAMEB={fn:'내 블록',up:'위로',down:'아래로',left:'왼쪽으로',right:'오른쪽으로',fw:'앞으로',tl:'왼쪽 돌기',tr:'오른쪽 돌기',rep:'반복',pick:'집기',put:'놓기',ifr:'막히면 오른쪽',ifl:'막히면 왼쪽'};
+function cls(t){return t==='fn'?'c-fn':ABS[t]!=null?'c-ar':t==='fw'?'c-fw':t==='rep'?'c-rp':t==='pick'?'c-pk':t==='put'?'c-pt':(t==='ifr'||t==='ifl')?'c-if':'c-tn';}
 function emo(e,x,y,fs){return '<text x="'+x+'" y="'+y+'" font-size="'+fs+'" text-anchor="middle" dominant-baseline="middle" class="em">'+e+'</text>';}
 // 물건 그림 (가운데 x,y, 크기 z: 100=칸 하나)
 function itemSvg(k,x,y,z){var f=z/100;
@@ -330,7 +351,7 @@ function rHome(){
   var sel=app.querySelector('.lb.sel');if(sel&&sel.scrollIntoView&&rHome.first!==false){rHome.first=false;try{sel.scrollIntoView({block:'center'});}catch(e){}}
 }
 function firstOf(st){for(var i=0;i<LV.length;i++)if(LV[i][0]===st)return i;return -1;}
-function start(i){if(i==null)i=D.lv;var P=parse(i);G={lv:i,P:P,prog:[],open:-1,fails:0,sel:null,ins:false,running:false,dirty:false,hint:P.mode==='pred',msg:'',guess:null,edges:{}};if(P.mode==='debug')G.prog=solToProg(INFO[i].bug);if(P.mode==='pred')G.prog=solToProg(INFO[i].spec);resetBot();go('play');
+function start(i){if(i==null)i=D.lv;var P=parse(i);G={lv:i,P:P,prog:[],fn:[],edit:P.mode==='fn'?'fn':'main',open:-1,fails:0,sel:null,ins:false,running:false,dirty:false,hint:P.mode==='pred',msg:'',guess:null,edges:{}};if(P.mode==='debug')G.prog=solToProg(INFO[i].bug);if(P.mode==='pred')G.prog=solToProg(INFO[i].spec);resetBot();go('play');
   var S=STAGES[P.st],m=S.say;
   if(i===0)G.msg='👇 아래 <b>➡</b> 블록을 눌러 쌓고 <b>▶ 실행</b>!';
   else if(i===firstOf(1))G.msg='⭐ 위에 서서 <b>✋집기</b>를 해야 별을 주워요!';
@@ -339,6 +360,7 @@ function start(i){if(i==null)i=D.lv;var P=parse(i);G={lv:i,P:P,prog:[],open:-1,f
   else if(P.mode==='debug')G.msg='🐞 이 블록들에 <b>버그</b>가 있어요! ▶ 실행해 보고 고쳐요';
   else if(P.mode==='pred')G.msg='🚩 로봇이 마지막에 도착할 <b>칸을 눌러요</b>. 그다음 ▶ 확인!';
   else if(P.mode==='draw')G.msg='✏️ 흐린 선과 <b>똑같이</b> 그려요. 갔던 길로 되돌아가도 돼요';
+  else if(P.mode==='fn')G.msg='⭐ 먼저 <b>내 블록</b>을 만들어요 (노란 칸). 그다음 메인에 <b>⭐</b>를 '+(P.opts.max)+'개 이하로 써서 가요!';
   else if(P.mode==='if')G.msg='🧠 <b>막히면 오른쪽</b> 블록은 앞이 막혔을 때만 돌아요. 🔁 반복 안에 넣어 봐요';
   else G.msg=m;
   say((NAME&&i===0?NAME+', ':'')+(P.items.length?m:S.say));if(scr==='play')rMsg();}
@@ -382,8 +404,10 @@ function drawBot(instant){var rb=document.getElementById('rb');if(!rb)return;var
 function rStarCount(){var e=document.getElementById('sc');if(!e)return;var P=G.P;e.innerHTML=P.items.length?'🧹 '+nPlaced(G.bot)+' / '+P.items.length:'⭐ '+nGot(G.bot)+' / '+P.stars.length;}
 function rMsg(){var e=document.getElementById('msg');if(e)e.innerHTML=G.msg||'&nbsp;';}
 function rProg(){
-  var p=G.prog,h='';
-  if(!p.length)h='<div class="ph">아래 블록을 누르면 여기에 쌓여요 👇</div>';
+  var p=G.prog,h='',FM=G.P.mode==='fn';
+  if(FM){h+='<div class="fnbox'+(G.edit==='fn'?' open':'')+'"><span class="fl">⭐ 내 블록 =</span>';G.fn.forEach(function(x,j){h+='<button class="tile '+cls(x.t)+'" data-id="f'+j+'" onclick="App.del(\'f'+j+'\')">'+ico(x.t)+'</button>';});
+    h+=(G.edit==='fn'?'<div class="slot" style="width:52px;height:52px;border-radius:12px;border:3px dashed #f59f00;color:#f59f00;font-size:28px;display:flex;align-items:center;justify-content:center">＋</div>':'<button class="rx" onclick="App.edit(\'fn\')">✏️ 고치기</button>')+'</div><div class="mainl">🤖 메인 프로그램 (블록 최대 '+G.P.opts.max+'개)'+(G.edit==='main'?'':' — <button class="rx" onclick="App.edit(\'main\')">여기에 쌓기</button>')+'</div>';}
+  if(!p.length)h+='<div class="ph">'+(FM&&G.edit==='fn'?'⭐ 내 블록을 다 만들면 <b>⤴ 다 만들었어요</b>를 눌러요':'아래 블록을 누르면 여기에 쌓여요 👇')+'</div>';
   p.forEach(function(b,i){
     if(b.t==='rep'){h+='<div class="rep'+(G.open===i?' open':'')+'" data-id="'+i+'"><div class="rh"><button class="rn" onclick="App.cyc('+i+')">🔁×'+b.n+'</button>'+(G.P.st===8?'<button class="rx" onclick="App.dec('+i+')">－ 줄이기</button>':'')+'<button class="rx" onclick="App.del(\''+i+'\')">✖ 빼기</button></div>';
       b.b.forEach(function(x,j){h+='<button class="tile '+cls(x.t)+'" data-id="'+i+'.'+j+'" onclick="App.del(\''+i+'.'+j+'\')">'+ico(x.t)+'</button>';});
@@ -392,7 +416,8 @@ function rProg(){
   if(G.P.mode==='pred')h=h.replace(/ onclick="App\.[a-zA-Z]+\([^)]*\)"/g,'');
   var pe=document.getElementById('prog');pe.innerHTML=h;pe.className='prog'+(G.running?' dis':'');pe.scrollTop=pe.scrollHeight;
   var ph='';
-  G.P.pal.forEach(function(t){ph+='<button class="pb '+cls(t)+'" onclick="App.add(\''+t+'\')">'+ico(t)+NAMEB[t]+'</button>';});
+  G.P.pal.forEach(function(t){if(FM&&G.edit==='fn'&&(t==='rep'||t==='fn'))return;ph+='<button class="pb '+cls(t)+'" onclick="App.add(\''+t+'\')">'+ico(t)+NAMEB[t]+'</button>';});
+  if(FM&&G.edit==='fn')ph+='<button class="pb endr" style="color:#e67700;border-color:#f59f00;box-shadow:0 5px 0 #ffd8a8" onclick="App.edit(\'main\')"><span style="font-size:34px;line-height:50px">⤴</span>다 만들었어요</button>';
   if(G.open>=0)ph+='<button class="pb endr" onclick="App.closeRep()"><span style="font-size:34px;line-height:50px">⤴</span>반복 끝</button>';
   if(G.P.mode==='pred')ph='';
   var pa=document.getElementById('pal');pa.innerHTML=ph;pa.className='pal'+(G.running?' dis':'');
@@ -401,25 +426,27 @@ function rProg(){
   if(G.P.mode==='pred'&&!G.running){document.getElementById('ctl').innerHTML='<button class="go'+(G.guess?'':' dis')+'" onclick="App.run()">▶ 확인'+(G.guess?'':' (칸을 먼저 눌러요)')+'</button>';document.getElementById('bc').innerHTML='🧱 '+countBlocks(p)+'개';return;}
   document.getElementById('ctl').innerHTML=G.running?'<button class="stop" onclick="App.stop()">■ 멈추기</button>':
     '<button onclick="App.back()"'+(p.length?'':' class="dis"')+'>⌫ 하나 지우기</button><button onclick="App.clear()"'+(p.length?'':' class="dis"')+'>🗑️ 모두</button><button class="go" onclick="App.run()">▶ 실행</button>';
-  document.getElementById('bc').innerHTML='🧱 '+countBlocks(p)+'개';
+  document.getElementById('bc').innerHTML='🧱 '+countBlocks(p)+(FM?' + ⭐'+G.fn.length:'')+'개';
 }
 // ---------- 블록 편집 ----------
 var lastAdd=0;
 function editStart(){if(G.running)return false;if(G.dirty){resetBot();rBoard();rStarCount();}clearMarks();return true;}
 function selArr(){var a=String(G.sel).split('.');return a.length>1?{arr:G.prog[+a[0]].b,k:+a[1]}:{arr:G.prog,k:+a[0]};}
 function add(t){var now=Date.now();if(now-lastAdd<200)return;if(!editStart())return;lastAdd=now;ac();
+  if(G.P.mode==='fn'){if(G.edit==='fn'){if(t==='rep'||t==='fn')return;if(G.fn.length>=8){full();return;}G.fn.push({t:t});sfx('add');rProg();return;}
+    if(countBlocks(G.prog)>=G.P.opts.max&&!(G.open>=0&&false)){sfx('no');G.msg='<span class="bad">메인 블록은 '+G.P.opts.max+'개까지예요!</span><span class="hint">되풀이되는 부분을 ⭐ 내 블록으로 묶어 봐요.</span>';rMsg();return;}}
   if(G.P.mode==='debug'&&G.sel!=null&&t!=='rep'){var S2=selArr();if(G.ins)S2.arr.splice(S2.k,0,{t:t});else S2.arr[S2.k]={t:t};G.sel=null;G.ins=false;sfx('add');G.msg=G.ins?'':'🔧 바꿨어요! ▶ 실행해 봐요';rMsg();rProg();return;}
   if(t==='rep'){if(G.prog.length>=20){full();return;}G.prog.push({t:'rep',n:2,b:[]});G.open=G.prog.length-1;sfx('add');G.msg='🔁 반복 안에 넣을 블록을 눌러요. <b>×2</b>를 누르면 횟수가 바뀌어요.';rMsg();rProg();return;}
   if(G.open>=0&&G.prog[G.open]){var rb=G.prog[G.open];if(rb.b.length>=10){full();return;}rb.b.push({t:t});}
   else{if(G.prog.length>=30){full();return;}G.prog.push({t:t});}
   sfx('add');if(G.msg&&G.msg.indexOf('class="bad"')>=0){G.msg='';rMsg();}rProg();}
 function full(){sfx('no');G.msg='블록이 너무 많아요! 조금 지워 볼까요?';rMsg();}
-function del(id){if(!editStart())return;if(G.P.mode==='debug'){G.sel=G.sel===String(id)?null:String(id);G.ins=false;sfx('add');G.msg=G.sel!=null?'🔧 고칠 블록을 골랐어요! 아래 블록을 누르면 <b>바뀌어요</b>':'🐞 버그를 찾아 고쳐요';rMsg();rProg();return;}var a=String(id).split('.'),i=+a[0];
+function del(id){if(!editStart())return;if(String(id).charAt(0)==='f'){G.fn.splice(+String(id).slice(1),1);sfx('del');rProg();return;}if(G.P.mode==='debug'){G.sel=G.sel===String(id)?null:String(id);G.ins=false;sfx('add');G.msg=G.sel!=null?'🔧 고칠 블록을 골랐어요! 아래 블록을 누르면 <b>바뀌어요</b>':'🐞 버그를 찾아 고쳐요';rMsg();rProg();return;}var a=String(id).split('.'),i=+a[0];
   if(a.length>1)G.prog[i].b.splice(+a[1],1);else{G.prog.splice(i,1);if(G.open===i)G.open=-1;else if(G.open>i)G.open--;}
   sfx('del');rProg();}
-function back(){if(!editStart())return;var p=G.prog;if(!p.length)return;var l=p[p.length-1];
+function back(){if(!editStart())return;if(G.P.mode==='fn'&&G.edit==='fn'){if(G.fn.length){G.fn.pop();sfx('del');rProg();}return;}var p=G.prog;if(!p.length)return;var l=p[p.length-1];
   if(l.t==='rep'&&G.open===p.length-1&&l.b.length)l.b.pop();else{p.pop();if(G.open>=p.length)G.open=-1;}sfx('del');rProg();}
-function clearAll(){if(!editStart())return;G.prog=[];G.open=-1;sfx('del');rProg();}
+function clearAll(){if(!editStart())return;if(G.P.mode==='fn'&&G.edit==='fn'){G.fn=[];sfx('del');rProg();return;}G.prog=[];G.open=-1;sfx('del');rProg();}
 function cyc(i){if(!editStart())return;var b=G.prog[i],mx=G.P.st===8?20:9;b.n=b.n>=mx?2:b.n+1;sfx('add');rProg();}
 function dec(i){if(!editStart())return;var b=G.prog[i];b.n=Math.max(2,b.n-1);sfx('del');rProg();}
 function dsel(a){if(G.sel==null)return;if(a==='x'){var S3=selArr();S3.arr.splice(S3.k,1);G.sel=null;sfx('del');G.msg='🔧 뺐어요! ▶ 실행해 봐요';}else if(a==='i'){G.ins=!G.ins;G.msg=G.ins?'➕ 아래 블록을 누르면 고른 블록 <b>앞에</b> 들어가요':'🔧 아래 블록을 누르면 바뀌어요';}else{G.sel=null;G.ins=false;G.msg='🐞 버그를 찾아 고쳐요';}rMsg();rProg();}
@@ -432,11 +459,12 @@ function clearMarks(){Array.prototype.forEach.call(document.querySelectorAll('.r
 function run(){
   if(G.running)return;ac();
   if(!G.prog.length){sfx('no');G.msg='블록을 먼저 쌓아 주세요 👇';rMsg();return;}
+  if(G.P.mode==='fn'&&JSON.stringify(G.prog).indexOf('"fn"')>=0&&!G.fn.length){sfx('no');G.msg='⭐ 내 블록이 비어 있어요. 노란 칸에 먼저 만들어요!';G.edit='fn';rMsg();rProg();return;}
   var steps=flatten(G.prog);if(!steps.length){sfx('no');G.msg='🔁 반복 안에 블록을 넣어 주세요.';rMsg();return;}
   if(G.P.mode==='pred'&&!G.guess){sfx('no');G.msg='🚩 로봇이 도착할 칸을 먼저 눌러요!';rMsg();return;}
   resetBot();G.rot=null;G.edges={};G.shown=null;rBoard();rStarCount();G.running=true;G.open=-1;G.msg='로봇이 움직여요… 🤖';G.fullSaid=false;rMsg();rProg();
   var i=0;
-  function hi(s){clearMarks();var t=app.querySelector('[data-id="'+s.id+'"]');if(t)t.classList.add('run');if(s.rep!=null){var c=app.querySelector('.rep[data-id="'+s.rep+'"]');if(c)c.classList.add('run');}}
+  function hi(s){clearMarks();var t=app.querySelector('[data-id="'+s.id+'"]');if(t)t.classList.add('run');if(s.fc!=null){var fcb=app.querySelector('[data-id="'+s.fc+'"]');if(fcb)fcb.classList.add('run');}if(s.rep!=null){var c=app.querySelector('.rep[data-id="'+s.rep+'"]');if(c)c.classList.add('run');}}
   function next(){if(!G||!G.running)return;
     if(i>=steps.length){finishRun(null);return;}
     var s=steps[i++];hi(s);var b=G.bot,pr0=[b.r,b.c],res=step(G.P,b,s.op);
@@ -484,7 +512,7 @@ function fail(m,tip){G.fails++;sfx('no');
   if(G.fails>=2&&!G.hint){G.hint=true;rBoard();tip='💡 보라색 발자국 순서대로 따라가 봐요!'+((G.P.stars.length||G.P.items.length)?' (별·물건 위에서 ✋집기)':'');}
   G.msg='<span class="bad">'+m+'</span><span class="hint">'+tip+'</span>';rProg();rMsg();say(m.replace('쿵!','쿵! '));}
 function win(){try{kidsGate.add(1);}catch(e){}
-  var P=G.P,n=countBlocks(G.prog),par=INFO[G.lv].par,s=n<=par?3:(n<=par+(P.st>=3?3:2)?2:1),lv=G.lv;if(P.mode==='pred'||P.mode==='debug')s=G.fails===0?3:(G.fails===1?2:1);
+  var P=G.P,n=countBlocks(G.prog)+(P.mode==='fn'?G.fn.length:0),par=INFO[G.lv].par,s=n<=par?3:(n<=par+(P.st>=3?3:2)?2:1),lv=G.lv;if(P.mode==='pred'||P.mode==='debug')s=G.fails===0?3:(G.fails===1?2:1);
   if(D.best[lv]==null||s>D.best[lv])D.best[lv]=s;var nx=lv+1<LV.length?lv+1:-1;if(nx>=0)D.lv=nx;save();
   sfx('win');confetti();var room=P.items.length>0;
   var TT={draw:['✏️','그림 완성!'],pred:['🚩','정답! 잘 읽었어요'],debug:['🐞','버그를 고쳤어요!']}[P.mode];
@@ -500,7 +528,7 @@ function confetti(){var em=['🎉','⭐','🎊','✨','🔋'];for(var i=0;i<22;i
   s.style.animationDuration=(1.6+Math.random()*1.6)+'s';s.style.animationDelay=(Math.random()*0.5)+'s';document.body.appendChild(s);(function(n){setTimeout(function(){n.remove();},4000);})(s);}}
 window.addEventListener('resize',function(){if(scr==='play'&&!G.running){rPlay();}});
 window.App={go:go,start:function(){start();},lv:function(i){D.lv=i;save();rHome();},set:function(k){D[k]=!D[k];save();rHome();},
-  add:add,del:del,back:back,clear:clearAll,cyc:cyc,dec:dec,guess:guess,dsel:dsel,openRep:openRep,closeRep:closeRep,run:run,stop:function(){stopRun();G.dirty=true;G.msg='멈췄어요. 고쳐서 다시 해 봐요.';rMsg();rProg();}};
+  add:add,del:del,back:back,clear:clearAll,cyc:cyc,dec:dec,guess:guess,dsel:dsel,openRep:openRep,closeRep:closeRep,run:run,edit:function(e){if(!editStart())return;G.edit=e;G.open=-1;sfx('add');if(e==='main')G.msg='🤖 이제 메인에 ⭐ 내 블록을 쌓아요';rMsg();rProg();},stop:function(){stopRun();G.dirty=true;G.msg='멈췄어요. 고쳐서 다시 해 봐요.';rMsg();rProg();}};
 go('home');
 </script>
 <a href="index.html" style="position:fixed;left:10px;bottom:10px;z-index:5;background:#fff;border-radius:999px;padding:8px 16px;font-size:18px;color:#3b2f2a;text-decoration:none;box-shadow:0 3px 0 rgba(0,0,0,.1);font-family:inherit" id="hubbtn">🎈 놀이터</a>

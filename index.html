@@ -126,7 +126,7 @@ function render(){
   h+='<a class="app" href="english.html" style="background:#d0ebff"><div class="em">🔤</div><div class="name">영어 놀이</div><div class="prog">아는 단어 '+enV+'개 · 쓴 글자 '+enT+'<br>⭐ '+enT0+'</div><div class="bar"><div style="width:'+Math.round(enT/52*100)+'%"></div></div></a>';
   h+='<a class="app" href="sudoku.html" style="background:#fff3bf"><div class="em">🔢</div><div class="name">그림 스도쿠</div><div class="prog">푼 판 '+(SD.solved||0)+'개<br>⭐ '+sdS+'</div></a>';
   h+='<a class="app" href="puzzle.html" style="background:#d3f9d8"><div class="em">🧩</div><div class="name">퍼즐 놀이</div><div class="prog">완성한 그림 '+pzDone+' / 40<br>⭐ '+pzS+'</div><div class="bar"><div style="width:'+Math.round(pzDone/40*100)+'%"></div></div></a>';
-  h+='<a class="app" href="robot.html" style="background:#dff3ff"><div class="em">🤖</div><div class="name">로봇 코딩</div><div class="prog">깬 판 '+rbDone+' / 66<br>⭐ '+rbS+'</div><div class="bar"><div style="width:'+Math.round(rbDone/66*100)+'%"></div></div></a>';
+  h+='<a class="app" href="robot.html" style="background:#dff3ff"><div class="em">🤖</div><div class="name">로봇 코딩</div><div class="prog">깬 판 '+rbDone+' / 74<br>⭐ '+rbS+'</div><div class="bar"><div style="width:'+Math.round(rbDone/74*100)+'%"></div></div></a>';
   h+='</div><div class="foot"><button onclick="sizePanel()">📐 화면 크기 '+Math.round(uiScale()*100)+'%</button> <button onclick="voicePanel()">🗣️ 소리 확인</button> <button onclick="parentOpen()">🔐 부모 설정</button></div>';
   h=gateCards(h);
   document.getElementById('app').innerHTML=h;
